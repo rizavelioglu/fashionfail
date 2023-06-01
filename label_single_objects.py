@@ -6,29 +6,42 @@ from PIL import Image, ImageTk
 
 
 class ImageFilterGUI:
-    def __init__(self,
-                 image_paths,
-                 save_dir: str = "./labeled_images.json"
-                 ):
+    def __init__(self, image_paths, save_dir: str = "./labeled_images.json"):
         self.image_paths = image_paths
         self.labeled_images_file = save_dir
 
         self.root = tk.Tk()
         self.canvas = tk.Canvas(self.root, width=600, height=600)
         self.canvas.pack()
-        self.canvas.create_text(300, 20, text="Does this image show a single item? Yes(y) or No(n)",
-                                font="Helvetica 15 bold", anchor=tk.CENTER)
-        self.keep_button = tk.Button(self.root, text="Yes (y)", command=self.keep_image, bg="green")
+        self.canvas.create_text(
+            300,
+            20,
+            text="Does this image show a single item? Yes(y) or No(n)",
+            font="Helvetica 15 bold",
+            anchor=tk.CENTER,
+        )
+        self.keep_button = tk.Button(
+            self.root, text="Yes (y)", command=self.keep_image, bg="green"
+        )
         self.keep_button.pack(side=tk.LEFT, padx=10)
-        self.discard_button = tk.Button(self.root, text="No (n)", command=self.discard_image, bg="red")
+        self.discard_button = tk.Button(
+            self.root, text="No (n)", command=self.discard_image, bg="red"
+        )
         self.discard_button.pack(side=tk.LEFT)
-        self.back_button = tk.Button(self.root, text="Back (b)", command=self.back_to_previous, bg="yellow")
+        self.back_button = tk.Button(
+            self.root, text="Back (b)", command=self.back_to_previous, bg="yellow"
+        )
         self.back_button.pack(side=tk.LEFT, padx=10)
-        self.save_button = tk.Button(self.root, text="Save & Quit (s)", command=self.save_and_quit, bg="lightblue")
+        self.save_button = tk.Button(
+            self.root,
+            text="Save & Quit (s)",
+            command=self.save_and_quit,
+            bg="lightblue",
+        )
         self.save_button.pack(side=tk.RIGHT, padx=10)
         self.current_image_index = 0
-        self.images_to_keep = []
-        self.images_to_discard = []
+        self.images_to_keep: list[str] = []
+        self.images_to_discard: list[str] = []
         self.previous_image_selection = None
         self.root.bind("<Key>", self.handle_key_press)
 
@@ -40,9 +53,15 @@ class ImageFilterGUI:
         self.canvas.create_image(0, 40, anchor=tk.NW, image=photo)
         self.canvas.image = photo
         # Show number of images labeled
-        self.canvas.create_text(550, 50,
-                                text=f"{self.current_image_index + 1} / {len(self.image_paths)}",
-                                font="Helvetica 15 bold", anchor=tk.CENTER, fill="red", width=400)
+        self.canvas.create_text(
+            550,
+            50,
+            text=f"{self.current_image_index + 1} / {len(self.image_paths)}",
+            font="Helvetica 15 bold",
+            anchor=tk.CENTER,
+            fill="red",
+            width=400,
+        )
 
     def keep_image(self):
         self.images_to_keep.append(self.image_paths[self.current_image_index])
@@ -74,25 +93,31 @@ class ImageFilterGUI:
         nb_of_kept_images = len(self.images_to_keep)
         nb_of_discarded_images = len(self.images_to_discard)
         # Save the responses
-        data = {"images_to_keep": self.images_to_keep,
-                "images_to_discard": self.images_to_discard}
+        data = {
+            "images_to_keep": self.images_to_keep,
+            "images_to_discard": self.images_to_discard,
+        }
 
         if os.path.exists(self.labeled_images_file):
-            with open(self.labeled_images_file, 'r+') as f:
+            with open(self.labeled_images_file, "r+") as f:
                 labeled_images_data = json.load(f)
-                labeled_images_data['images_to_keep'].extend(data['images_to_keep'])
-                labeled_images_data['images_to_discard'].extend(data['images_to_discard'])
+                labeled_images_data["images_to_keep"].extend(data["images_to_keep"])
+                labeled_images_data["images_to_discard"].extend(
+                    data["images_to_discard"]
+                )
                 f.seek(0)  # Move the file pointer to the beginning
                 json.dump(labeled_images_data, f)
         else:
-            with open(self.labeled_images_file, 'w') as f:
+            with open(self.labeled_images_file, "w") as f:
                 json.dump(data, f)
 
         # Show stats
-        tk.messagebox.showinfo("Message",
-                               f"Filtered a total of {nb_of_kept_images + nb_of_discarded_images} images: "
-                               f"{nb_of_kept_images} single object + {nb_of_discarded_images} not-single object!"
-                               f"\nResponses saved to: ")
+        tk.messagebox.showinfo(
+            "Message",
+            f"Filtered a total of {nb_of_kept_images + nb_of_discarded_images} images: "
+            f"{nb_of_kept_images} single object + {nb_of_discarded_images} not-single object!"
+            f"\nResponses saved to: ",
+        )
 
         self.root.quit()
 
@@ -112,7 +137,9 @@ class ImageFilterGUI:
 
 
 if __name__ == "__main__":
-    import os, glob, logging
+    import glob
+    import logging
+    import os
 
     def get_image_paths():
         image_dir = "/home/rizavelioglu/work/data/adidas/images/"
@@ -128,13 +155,18 @@ if __name__ == "__main__":
 
     def filter_image_paths(image_paths, labeled_images_file):
         # Read labeled image paths from labeled_images.json
-        with open(labeled_images_file, 'r') as f:
+        with open(labeled_images_file) as f:
             labeled_images_data = json.load(f)
 
-        already_labeled_images = labeled_images_data["images_to_keep"] + labeled_images_data["images_to_discard"]
+        already_labeled_images = (
+            labeled_images_data["images_to_keep"]
+            + labeled_images_data["images_to_discard"]
+        )
 
         # Filter image paths based on labeled images
-        filtered_paths = [path for path in image_paths if path not in already_labeled_images]
+        filtered_paths = [
+            path for path in image_paths if path not in already_labeled_images
+        ]
 
         return filtered_paths
 
