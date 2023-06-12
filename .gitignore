@@ -1,0 +1,7 @@
+.aim
+.idea
+.mypy_cache
+.ipynb_checkpoints
+__pycache__
+*.egg-info
+.DS_Store
