@@ -1,41 +1,66 @@
 import argparse
 import concurrent.futures
 import json
-import os
-import urllib.request
 from pathlib import Path
-from urllib.error import HTTPError
 
-import pandas as pd
+import requests
 from loguru import logger
 from tqdm import tqdm
 
+# Add transformations to apply to images
+# See: https://cloudinary.com/documentation/transformation_reference
+IMAGE_SOURCES_TO_PARAMS = {
+    "assetmanagerpim-res.cloudinary.com": (
+        "images/",
+        "images/f_jpg,q_auto,fl_lossy,c_fill,g_auto/",
+    ),  # adidas
+    "images.puma.com": (
+        "upload/",
+        "upload/f_jpg,q_auto,fl_lossy,c_fill,g_auto/",
+    ),  # puma
+    "nb.scene7.com": (
+        "$dw_detail_gallery$",
+        "&bgcolor=f1f1f1&wid=1600&hei=1600.jpg",
+    ),  # new balance
+    "birkenstock.com": ("", ""),  # birkenstock
+}
 
-def download_images(cli_args) -> None:
-    """Download images from their URLs in and save them to `cli_args.save_dir`.
 
-    Multithreading is used to speed up the process.
+def download_image(session, url, img_params, save_dir):
+    img_url = url.replace(img_params[0], img_params[1])
+    filename = Path(url).name
+    save_path = save_dir / filename
+    try:
+        response = session.get(img_url, stream=True)
+        response.raise_for_status()
+        with open(save_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+    except (requests.exceptions.RequestException, OSError):
+        print(f"Could not download: {url}")
 
-    Notes
-    -----
-    See the following for more info on `concurrent.futures`, where the code is taken from:
-        https://stackoverflow.com/questions/51601756/use-tqdm-with-concurrent-futures
-    See the following for more info on Multithreading and Multiprocessing:
-        https://www.toptal.com/python/beginners-guide-to-concurrency-and-parallelism-in-python
-    """
-    global map_fn
 
-    def map_fn(img_url):
-        # Add transformations to apply to images
-        # See: https://cloudinary.com/documentation/transformation_reference
-        img_params = "images/f_jpg,q_auto,fl_lossy,c_fill,g_auto/"
-        img_url = img_url.replace("images/", img_params)
-        try:
-            urllib.request.urlretrieve(
-                img_url, f"{cli_args.save_dir}/{Path(img_url).name}"
-            )
-        except (FileNotFoundError, HTTPError):
-            logger.exception(f"Could not download: {img_url}")
+def determine_source(url):
+    # Split the URL by the forward slash (/)
+    components = url.split("/")
+    if len(components) >= 3:
+        source = components[2]
+        return source
+    else:
+        return None
+
+
+def get_img_params_for_source(source):
+    try:
+        img_params = IMAGE_SOURCES_TO_PARAMS[source]
+        return img_params
+    except KeyError:
+        logger.exception(f"Image URL source: `{source}` is unknown!")
+
+
+def download_images(cli_args):
+    save_dir = Path(cli_args.save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
 
     with open(cli_args.json_path) as f:
         img_info = json.load(f)
@@ -43,23 +68,24 @@ def download_images(cli_args) -> None:
     img_urls = img_info["images"]
 
     # Filter out already downloaded image URLs
-    already_downloaded_urls = os.listdir(cli_args.save_dir)
-    df_all_img_urls = pd.DataFrame(img_urls, columns=["url"])
-    df_all_img_urls["filename"] = df_all_img_urls["url"].apply(lambda x: Path(x).name)
-    remaining_urls = df_all_img_urls[
-        ~df_all_img_urls.filename.isin(already_downloaded_urls)
-    ].url.tolist()
+    already_downloaded_urls = [f.name for f in save_dir.iterdir()]
+    remaining_urls = [
+        url for url in img_urls if Path(url).name not in already_downloaded_urls
+    ]
 
-    with tqdm(total=len(remaining_urls)) as pbar:
+    with tqdm(total=len(remaining_urls)) as pbar, requests.Session() as session:
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=cli_args.max_workers
         ) as executor:
-            futures = {executor.submit(map_fn, url): url for url in remaining_urls}
-            results = {}
-            for future in concurrent.futures.as_completed(futures):
-                arg = futures[future]
-                results[arg] = future.result()
+            for url in remaining_urls:
+                source = determine_source(url)  # Determine the appropriate image source
+                img_params = get_img_params_for_source(
+                    source
+                )  # Get the corresponding img_params
+                executor.submit(download_image, session, url, img_params, save_dir)
                 pbar.update(1)
+
+    print("Download completed!")
 
 
 if __name__ == "__main__":
