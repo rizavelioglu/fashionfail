@@ -4,6 +4,7 @@ import json
 import os
 import urllib.request
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pandas as pd
 from loguru import logger
@@ -33,14 +34,13 @@ def download_images(cli_args) -> None:
             urllib.request.urlretrieve(
                 img_url, f"{cli_args.save_dir}/{Path(img_url).name}"
             )
-        except FileNotFoundError:
+        except (FileNotFoundError, HTTPError):
             logger.exception(f"Could not download: {img_url}")
 
     with open(cli_args.json_path) as f:
         img_info = json.load(f)
 
     img_urls = img_info["images"]
-    img_info["source_name"]
 
     # Filter out already downloaded image URLs
     already_downloaded_urls = os.listdir(cli_args.save_dir)
