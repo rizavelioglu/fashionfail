@@ -1,8 +1,8 @@
 import argparse
 import concurrent.futures
-import json
 from pathlib import Path
 
+import pandas as pd
 import requests
 from loguru import logger
 from tqdm import tqdm
@@ -22,13 +22,12 @@ IMAGE_SOURCES_TO_PARAMS = {
         "$dw_detail_gallery$",
         "&bgcolor=f1f1f1&wid=1600&hei=1600.jpg",
     ),  # new balance
-    "birkenstock.com": ("", ""),  # birkenstock
+    "www.birkenstock.com": ("", ""),  # birkenstock
 }
 
 
-def download_image(session, url, img_params, save_dir):
+def download_image(session, url, img_params, save_dir, filename):
     img_url = url.replace(img_params[0], img_params[1])
-    filename = Path(url).name
     save_path = save_dir / filename
     try:
         response = session.get(img_url, stream=True)
@@ -62,27 +61,32 @@ def download_images(cli_args):
     save_dir = Path(cli_args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    with open(cli_args.json_path) as f:
-        img_info = json.load(f)
+    df = pd.read_csv(
+        cli_args.csv_path, usecols=["images", "image_name"]
+    )  # Read the DataFrame from a CSV file
+    img_urls = df["images"].tolist()  # Extract the "images" column as a list
+    image_names = df["image_name"].tolist()  # Extract the "image_name" column as a list
 
-    img_urls = img_info["images"]
-
-    # Filter out already downloaded image URLs
-    already_downloaded_urls = [f.name for f in save_dir.iterdir()]
+    # Filter out already downloaded image URLs based on the "image_name" column
+    already_downloaded_names = [f.name for f in save_dir.iterdir()]
     remaining_urls = [
-        url for url in img_urls if Path(url).name not in already_downloaded_urls
+        url
+        for url, name in zip(img_urls, image_names)
+        if name not in already_downloaded_names
     ]
 
     with tqdm(total=len(remaining_urls)) as pbar, requests.Session() as session:
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=cli_args.max_workers
         ) as executor:
-            for url in remaining_urls:
+            for url, filename in zip(remaining_urls, image_names):
                 source = determine_source(url)  # Determine the appropriate image source
                 img_params = get_img_params_for_source(
                     source
                 )  # Get the corresponding img_params
-                executor.submit(download_image, session, url, img_params, save_dir)
+                executor.submit(
+                    download_image, session, url, img_params, save_dir, filename
+                )
                 pbar.update(1)
 
     print("Download completed!")
@@ -91,10 +95,10 @@ def download_images(cli_args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--json_path",
+        "--csv_path",
         type=str,
         required=True,
-        help="The path to .json file where image URLs are stored.",
+        help="The path to .csv file where image URLs are stored.",
     )
     parser.add_argument(
         "--save_dir",
