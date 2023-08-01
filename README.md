@@ -24,10 +24,10 @@ Here's the full pipeline of creating FashionFail Dataset:
 <br></br>
 
 5. Quality check of GTs using `/fashionfail/label_gt.py`
-    - ***1,105*** images (of 1,057 are fine) are labeled and results stored at `/data/fashionfail/labeled_images_GT.json`
+    - ***1,113*** images (of 1,032 are fine) are labeled and results stored at `/data/fashionfail/labeled_images_GT.json`
 <br></br>
 
-6. "Complete" generated GTs.\
+[outdated] 6. "Complete" generated GTs.\
 Generated GTs are not complete. For example, for a t-shirt a box is generated automatically for the class top, t-shirt
 but other detections are missing such as; 'sleeves', 'neckline', etc. Therefore, such GTs need to be added. Since we
 don't want to annotate images manually, we used `AMRCNN` to make predictions which make pretty well predictions for
