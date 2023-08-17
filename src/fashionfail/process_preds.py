@@ -14,12 +14,22 @@ def load_tpu_preds(path_to_preds):
 
 
 def _filter_preds_for_classes(row):
-    """Filter classes, scores, boxes, and masks attribute in the predictions dataframe based on the 'class id'.
-
-    ClassID's larger or equal to 27 (e.g. "sleeve", "neckline", etc.) belong to super-categories; "garment parts",
-    "closures", "decorations", which we want to filter out.
-
     """
+    Filter prediction attributes in the dataframe based on class IDs.
+
+    This function filters classes, scores, boxes, and masks attributes in the predictions
+    dataframe based on the 'class ID'. Class IDs that are larger or equal to 27, such as
+    "sleeve", "neckline", etc., belonging to super-categories "garment parts", "closures",
+    and "decorations", are filtered out.
+
+    Args:
+        row (pd.Series): A Pandas Series representing a row of predictions with attributes
+            'classes', 'scores', 'boxes', and 'masks'.
+
+    Returns:
+        tuple: A tuple containing filtered arrays for 'classes', 'scores', 'boxes', and 'masks'.
+    """
+
     filtered_classes = np.array(
         [class_id for class_id in row["classes"] if 1 <= class_id <= 27]
     )
@@ -61,6 +71,7 @@ def clean_df_preds(df_preds):
         f"Number of samples: {nb_of_samples}, of which {nb_of_samples_w_no_preds} "
         f"(%{nb_of_samples_w_no_preds/nb_of_samples*100:.1f}) have no predictions!"
     )
+    logger.info("Filtering predictions made for categoryID >= 27...")
 
     # Apply the filtering function to the dataframe and update the predictions
     df_preds["classes"], df_preds["scores"], df_preds["boxes"], df_preds["masks"] = zip(

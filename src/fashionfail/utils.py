@@ -8,6 +8,23 @@ from matplotlib import pyplot as plt
 
 @lru_cache
 def load_categories() -> dict:
+    """
+    Load Fashionpedia categories from a JSON file and return a dictionary mapping
+    category IDs to their corresponding names.
+
+    Returns:
+        dict: A dictionary where keys are category IDs (integers) and values are
+        corresponding category names (strings).
+
+    Raises:
+        FileNotFoundError: If the expected JSON file 'categories.json' is not found
+        at the specified path.
+
+    Example:
+        >>> category_id_to_name = load_categories()
+        >>> print(category_id_to_name[23])
+        'Shoe'
+    """
     expected_path = Path(
         "/home/rizavelioglu/work/repos/segmentation/segmentation/visualization/categories.json"
     )

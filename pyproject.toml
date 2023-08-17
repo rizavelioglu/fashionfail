@@ -1,0 +1,47 @@
+title = "fashionfail"
+
+[owner]
+name = "Riza Velioglu"
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0"]
+
+[project]
+name = "fashionfail"
+version = "0.0.1"
+description = "Official Repository of FashionFail paper"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  {email = "rvelioglu@techfak.uni-bielefeld.de", name = "Riza Velioglu"}
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Development Status :: 3 - Alpha",
+]
+dependencies = []
+
+
+[project.optional-dependencies]
+dev = [
+  "pip-tools>=6.12.2",
+  "pre-commit>=3.3.2",
+  "pytest-cov>=4.0.0",
+  "pytest>=7.2.0",
+  "numpy>=1.24.3",
+  "loguru>=0.7.0",
+  "matplotlib>=3.7.1",
+  "pandas>=2.0.3",
+  "pillow>=9.5.0",
+  "pycocotools>=2.0.6",
+  "sahi>=0.11.14",
+  "supervision>=0.13.0",
+  "tk>=8.6.12",
+  "tqdm>=4.65.0",
+]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/rizavelioglu/fashionfail/issues"
+"Homepage" = "https://github.com/rizavelioglu/fashionfail"
+"Source" = "https://github.com/rizavelioglu/fashionfail"
