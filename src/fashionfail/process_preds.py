@@ -60,7 +60,12 @@ def clean_df_preds(df_preds):
     # Preprocess dataframe
     df_preds = df_preds[["image_file", "classes", "scores", "boxes", "masks"]]
     df_preds = df_preds.reset_index(drop=True)
-    df_preds["image_file"] = df_preds["image_file"].apply(lambda x: x.split("/")[1])
+    # Check if image_file attributes contain a "/"
+    has_full_path = df_preds["image_file"].str.contains("/")
+    # Apply the split operation only to rows with full path
+    df_preds.loc[has_full_path, "image_file"] = df_preds.loc[
+        has_full_path, "image_file"
+    ].apply(lambda x: x.split("/")[1])
 
     # Logging
     nb_of_samples = df_preds.shape[0]
