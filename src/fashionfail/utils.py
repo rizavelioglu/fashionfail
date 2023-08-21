@@ -3,6 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
+import torch
 from matplotlib import pyplot as plt
 
 
@@ -37,6 +38,20 @@ def load_categories() -> dict:
         return category_id_to_name
 
     raise FileNotFoundError(f"`categories.json` expected at `{expected_path}`")
+
+
+def yxyx_to_xyxy(boxes):
+    """Convert bounding boxes from (y1, x1, y2, x2) format to (x1, y1, x2, y2) format.
+
+    Args:
+        boxes (torch.Tensor): A tensor of bounding boxes in the (y1, x1, y2, x2) format.
+
+    Returns:
+        torch.Tensor: A tensor of bounding boxes in the (x1, y1, x2, y2) format.
+    """
+    y1, x1, y2, x2 = boxes.unbind(-1)
+    boxes = torch.stack((x1, y1, x2, y2), dim=-1)
+    return boxes
 
 
 # Reliability Diagram helper functions
