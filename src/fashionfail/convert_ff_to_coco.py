@@ -3,7 +3,6 @@ Convert the raw annotations (both label(from `textdavinci`) and bbox-masks(from 
 dataset to COCO format, yielding a `.json` file.
 """
 import json
-import os
 import pickle
 
 import numpy as np
@@ -34,7 +33,8 @@ def mask_to_polygon(mask):
     return [polygon] if polygon else []
 
 
-GT_SAVE_DIR = "/home/rizavelioglu/work/data/fashionfail/annotations"
+ANNS_DIR = "/home/rizavelioglu/work/data/fashionfail/annotations"
+GT_DIR = "/home/rizavelioglu/work/data/fashionfail/labeled_images_GT.json"
 RAW_CATEGORIES = "/home/rizavelioglu/work/repos/segmentation/segmentation/visualization/categories.json"
 
 # Load categories
@@ -61,9 +61,14 @@ df_cat = pd.read_csv(
 # Convert label to int id and create a new column "label_id"
 df_cat["label_id"] = df_cat["label"].map(lambda label: name_to_category_id.get(label))
 
+# Get GT image names
+with open(GT_DIR, "r+") as f:
+    gt_image_names = json.load(f)
+gt_image_names = gt_image_names["images_to_keep"]
 
-for file in tqdm(os.listdir(GT_SAVE_DIR)):
-    image_name = file.replace(".pkl", ".jpg")
+
+for image_name in tqdm(gt_image_names):
+    ann_name = image_name.replace(".jpg", ".pkl")
     # Load class-GT
     gt_class = df_cat[df_cat.image_name == image_name].label_id.values[0]
 
@@ -71,7 +76,7 @@ for file in tqdm(os.listdir(GT_SAVE_DIR)):
         continue
 
     # Load box-GT
-    with open(f"{GT_SAVE_DIR}/{file}", "rb") as f:
+    with open(f"{ANNS_DIR}/{ann_name}", "rb") as f:
         gt = pickle.load(f)
 
     gt.class_id = int(gt_class)
