@@ -53,4 +53,19 @@ for im in labeled_images_data["images_to_keep"]:
     shutil.copyfile(src+im, dst+im)
 ```
 
-7. Tar `images-sample` and get predictions from `tpu`
+7. Tar `images-sample`
+```bash
+tar -cvf ff-sample.tar images-sample/*
+```
+8. Get predictions from `tpu`:
+```bash
+python inference_fashion.py \
+    --model="attribute_mask_rcnn" \
+    --config_file="projects/fashionpedia/configs/yaml/spinenet143_amrcnn.yaml" \
+    --checkpoint_path="fashionpedia-spinenet-143/model.ckpt" \
+    --label_map_file="projects/fashionpedia/dataset/fashionpedia_label_map.csv" \
+    --output_html="out.html" --max_boxes_to_draw=8 --min_score_threshold=0.05 \
+    --image_size="640" \
+    --image_file_pattern="/home/rizavelioglu/work/data/fashionpedia/fashionpedia-val.tar" \
+    --output_file="outputs/output-fashionpedia-val.npy"
+```
