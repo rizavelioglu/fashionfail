@@ -1,6 +1,14 @@
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+import torch
 from loguru import logger
+from pycocotools.coco import COCO
+from torchvision.ops import box_convert
+
+from fashionfail.utils import yxyx_to_xyxy
 
 
 def load_tpu_preds(path_to_preds):
@@ -18,7 +26,7 @@ def _filter_preds_for_classes(row):
     Filter prediction attributes in the dataframe based on class IDs.
 
     This function filters classes, scores, boxes, and masks attributes in the predictions
-    dataframe based on the 'class ID'. Class IDs that are larger or equal to 27, such as
+    dataframe based on the 'class ID'. Class IDs that are larger or equal to 28, such as
     "sleeve", "neckline", etc., belonging to super-categories "garment parts", "closures",
     and "decorations", are filtered out.
 
@@ -31,7 +39,7 @@ def _filter_preds_for_classes(row):
     """
 
     filtered_classes = np.array(
-        [class_id for class_id in row["classes"] if 1 <= class_id <= 27]
+        [class_id for class_id in row["classes"] if 1 <= class_id <= 28]
     )
     filtered_scores = np.array(
         [
@@ -76,7 +84,7 @@ def clean_df_preds(df_preds):
         f"Number of samples: {nb_of_samples}, of which {nb_of_samples_w_no_preds} "
         f"(%{nb_of_samples_w_no_preds/nb_of_samples*100:.1f}) have no predictions!"
     )
-    logger.info("Filtering predictions made for categoryID >= 27...")
+    logger.info("Filtering predictions made for categoryID >= 28...")
 
     # Apply the filtering function to the dataframe and update the predictions
     df_preds["classes"], df_preds["scores"], df_preds["boxes"], df_preds["masks"] = zip(
@@ -99,3 +107,69 @@ def clean_df_preds(df_preds):
     df_preds = df_preds[df_preds["classes"].apply(lambda x: x.size != 0)]
 
     return df_preds
+
+
+def convert_tpu_preds_to_coco(preds_path: str, anns_path: str) -> str:
+    logger.info("Converting AMRCNN predictions to COCO format...")
+    # The path to the resulting .json file
+    output_json_file = preds_path.replace(".npy", "-coco.json")
+
+    if Path(output_json_file).exists():
+        logger.warning(
+            f"Predictions are already converted to COCO format! To re-convert, remove the file at: {output_json_file}."
+        )
+        return output_json_file
+
+    # Load predictions
+    df_preds = load_tpu_preds(preds_path)
+
+    # Explode predictions for each sample
+    df_exploded = df_preds.explode(["classes", "scores", "boxes", "masks"])
+
+    # Rename and reorder columns
+    df_exploded = df_exploded.rename(
+        columns={"classes": "class", "boxes": "bbox", "scores": "score"}
+    )
+
+    # Apply the box_convert function to each box in the "bbox" column
+    df_exploded["bbox"] = df_exploded["bbox"].apply(
+        lambda bbox: box_convert(
+            yxyx_to_xyxy(torch.tensor(bbox)), in_fmt="xyxy", out_fmt="xywh"
+        ).numpy()
+    )
+
+    # Round coordinates to the nearest tenth of a pixel
+    df_exploded["bbox"] = df_exploded["bbox"].apply(
+        lambda bbox: [round(coord, 1) for coord in bbox]
+    )
+
+    # Load GT annotations (required for setting `image_id`)
+    coco = COCO(anns_path)
+    # Parse GT-images
+    coco_imgs = pd.DataFrame(coco.imgs.values())
+
+    # Convert the DataFrame to a list of dictionaries in the desired format
+    json_data = []
+    for _, row in df_exploded.iterrows():
+        image_id = coco_imgs[
+            coco_imgs.file_name == row["image_file"].split("/")[1]
+        ].id.values[0]
+
+        json_data.append(
+            {
+                "image_id": int(image_id),
+                "category_id": int(row["class"])
+                - 1,  # subtract 1 to match official annotation
+                "bbox": [
+                    round(float(coord), 1) for coord in row["bbox"]
+                ],  # convert bbox coord.s to rounded floats
+                "score": float(row["score"]),
+            }
+        )
+
+    # Save the list of dictionaries as a JSON file
+    with open(output_json_file, "w") as f:
+        json.dump(json_data, f, indent=4)
+
+    logger.info(f"The resulting file is saved at: {output_json_file}.")
+    return output_json_file
