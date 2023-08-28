@@ -11,12 +11,15 @@ from torchvision.ops import box_convert
 from fashionfail.utils import yxyx_to_xyxy
 
 
-def load_tpu_preds(path_to_preds):
+def load_tpu_preds(path_to_preds: str, preprocess: bool = True) -> pd.DataFrame:
     # Load tpu predictions to dataframe
     preds = np.load(path_to_preds, allow_pickle=True)
-    df_preds = pd.DataFrame.from_dict(list(preds))
-
+    df_preds = pd.DataFrame.from_records(preds)
     logger.info(f"Predictions loaded from: {path_to_preds}")
+
+    # Apply basic preprocessing on request
+    if preprocess:
+        df_preds = clean_df_preds(df_preds)
 
     return df_preds
 
@@ -82,7 +85,7 @@ def clean_df_preds(df_preds):
     ].shape[0]
     logger.debug(
         f"Number of samples: {nb_of_samples}, of which {nb_of_samples_w_no_preds} "
-        f"(%{nb_of_samples_w_no_preds/nb_of_samples*100:.1f}) have no predictions!"
+        f"(%{nb_of_samples_w_no_preds / nb_of_samples * 100:.1f}) have no predictions!"
     )
     logger.info("Filtering predictions made for categoryID >= 28...")
 
@@ -97,14 +100,8 @@ def clean_df_preds(df_preds):
         - nb_of_samples_w_no_preds
     )
     logger.debug(
-        f"Number of samples with no predictions after filtering: {nb_of_samples_w_no_preds_after_filter}."
+        f"Number of samples with no predictions after filtering categories: {nb_of_samples_w_no_preds_after_filter}."
     )
-    logger.info(
-        f"Filtering samples that have no predictions, in total: {nb_of_samples_w_no_preds + nb_of_samples_w_no_preds_after_filter}."
-    )
-
-    # Filter out samples where no predictions made
-    df_preds = df_preds[df_preds["classes"].apply(lambda x: x.size != 0)]
 
     return df_preds
 
@@ -121,7 +118,9 @@ def convert_tpu_preds_to_coco(preds_path: str, anns_path: str) -> str:
         return output_json_file
 
     # Load predictions
-    df_preds = load_tpu_preds(preds_path)
+    df_preds = load_tpu_preds(preds_path, preprocess=False)
+    # Remove samples with no predictions, otherwise following processing fails
+    df_preds = df_preds[df_preds["boxes"].apply(lambda box: box.size != 0)]
 
     # Explode predictions for each sample
     df_exploded = df_preds.explode(["classes", "scores", "boxes", "masks"])
