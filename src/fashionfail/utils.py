@@ -38,7 +38,7 @@ def load_categories() -> dict:
     raise FileNotFoundError(f"`categories.json` expected at `{expected_path}`")
 
 
-def yxyx_to_xyxy(boxes):
+def yxyx_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:
     """Convert bounding boxes from (y1, x1, y2, x2) format to (x1, y1, x2, y2) format.
 
     Args:

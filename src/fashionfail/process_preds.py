@@ -66,7 +66,7 @@ def _filter_preds_for_classes(row):
     return filtered_classes, filtered_scores, filtered_boxes, filtered_masks
 
 
-def clean_df_preds(df_preds):
+def clean_df_preds(df_preds: pd.DataFrame) -> pd.DataFrame:
     logger.info("Processing predictions dataframe...")
     # Preprocess dataframe
     df_preds = df_preds[["image_file", "classes", "scores", "boxes", "masks"]]

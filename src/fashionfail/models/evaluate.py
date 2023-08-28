@@ -47,7 +47,7 @@ def get_cli_args():
     return parser.parse_args()
 
 
-def eval_with_coco(args):
+def eval_with_coco(args) -> None:
     # Convert AMRCNN predictions to COCO format
     annotation_file = convert_tpu_preds_to_coco(
         preds_path=args.preds_path, anns_path=args.anns_path
@@ -67,7 +67,7 @@ def eval_with_coco(args):
     coco_eval.summarize()
 
 
-def eval_with_torchmetrics(args):
+def eval_with_torchmetrics(args) -> None:
     # Load GT annotations
     coco = COCO(args.anns_path)
 
