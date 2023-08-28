@@ -157,11 +157,10 @@ def convert_tpu_preds_to_coco(preds_path: str, anns_path: str) -> str:
         json_data.append(
             {
                 "image_id": int(image_id),
-                "category_id": int(row["class"])
-                - 1,  # subtract 1 to match official annotation
-                "bbox": [
-                    round(float(coord), 1) for coord in row["bbox"]
-                ],  # convert bbox coord.s to rounded floats
+                # subtract 1 to match official annotation
+                "category_id": int(row["class"]) - 1,
+                # convert bbox coord.s to rounded floats
+                "bbox": [round(float(coord), 1) for coord in row["bbox"]],
                 "score": float(row["score"]),
             }
         )
