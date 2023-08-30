@@ -87,7 +87,7 @@ def clean_df_preds(df_preds: pd.DataFrame) -> pd.DataFrame:
         f"Number of samples: {nb_of_samples}, of which {nb_of_samples_w_no_preds} "
         f"(%{nb_of_samples_w_no_preds / nb_of_samples * 100:.1f}) have no predictions!"
     )
-    logger.info("Filtering predictions made for categoryID >= 28...")
+    logger.info("Filtering out predictions made for categoryID >= 28...")
 
     # Apply the filtering function to the dataframe and update the predictions
     df_preds["classes"], df_preds["scores"], df_preds["boxes"], df_preds["masks"] = zip(
