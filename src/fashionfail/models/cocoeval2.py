@@ -119,7 +119,7 @@ class COCOeval2:
         ]
         self._paramsEval = copy.deepcopy(self.params)
         toc = time.time()
-        print(f"DONE (t={toc-tic:0.2f}s).")
+        print(f"DONE (t={toc - tic:0.2f}s).")
 
     def computeIoU(self, imgId, catId):
         p = self.params
@@ -313,6 +313,8 @@ class COCOeval2:
         num_tp = np.zeros((T, K, A, M))
         num_fp = np.zeros((T, K, A, M))
         num_fn = np.zeros((T, K, A, M))
+        scores_tp = {catId: np.array([]) for catId in range(K)}
+        scores_fp = {catId: np.array([]) for catId in range(K)}
         # riza
 
         # create dictionary for future indexing
@@ -360,6 +362,16 @@ class COCOeval2:
                         continue
                     tps = np.logical_and(dtm, np.logical_not(dtIg))
                     fps = np.logical_and(np.logical_not(dtm), np.logical_not(dtIg))
+
+                    # riza
+                    if a == 0 and m == 2:
+                        scores_tp[k] = np.concatenate(
+                            (scores_tp[k], dtScoresSorted[tps[0]]), axis=None
+                        )
+                        scores_fp[k] = np.concatenate(
+                            (scores_fp[k], dtScoresSorted[fps[0]]), axis=None
+                        )
+                    # riza
 
                     tp_sum = np.cumsum(tps, axis=1).astype(dtype=float)
                     fp_sum = np.cumsum(fps, axis=1).astype(dtype=float)
@@ -412,9 +424,11 @@ class COCOeval2:
             "num_tp": num_tp,  # riza
             "num_fp": num_fp,
             "num_fn": num_fn,
+            "scores_tp": scores_tp,
+            "scores_fp": scores_fp,
         }
         toc = time.time()
-        print(f"DONE (t={toc-tic:0.2f}s).")
+        print(f"DONE (t={toc - tic:0.2f}s).")
 
     def summarize(self):
         """
