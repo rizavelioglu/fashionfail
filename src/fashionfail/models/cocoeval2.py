@@ -1,5 +1,6 @@
 import copy
 import datetime
+import logging
 import time
 from collections import defaultdict
 
@@ -15,6 +16,7 @@ class COCOeval2:
         :param cocoDt: coco object with detection results
         :return: None
         """
+        logging.warning("Using the unofficial implementation of COCOeval!")
         if not iouType:
             print("iouType not specified. use default iouType segm")
         self.cocoGt = cocoGt  # ground truth COCO API
@@ -309,13 +311,11 @@ class COCOeval2:
         recall = -np.ones((T, K, A, M))
         scores = -np.ones((T, R, K, A, M))
 
-        # riza
         num_tp = np.zeros((T, K, A, M))
         num_fp = np.zeros((T, K, A, M))
         num_fn = np.zeros((T, K, A, M))
         scores_tp = {catId: np.array([]) for catId in range(K)}
         scores_fp = {catId: np.array([]) for catId in range(K)}
-        # riza
 
         # create dictionary for future indexing
         _pe = self._paramsEval
@@ -363,7 +363,6 @@ class COCOeval2:
                     tps = np.logical_and(dtm, np.logical_not(dtIg))
                     fps = np.logical_and(np.logical_not(dtm), np.logical_not(dtIg))
 
-                    # riza
                     if a == 0 and m == 2:
                         scores_tp[k] = np.concatenate(
                             (scores_tp[k], dtScoresSorted[tps[0]]), axis=None
@@ -371,7 +370,6 @@ class COCOeval2:
                         scores_fp[k] = np.concatenate(
                             (scores_fp[k], dtScoresSorted[fps[0]]), axis=None
                         )
-                    # riza
 
                     tp_sum = np.cumsum(tps, axis=1).astype(dtype=float)
                     fp_sum = np.cumsum(fps, axis=1).astype(dtype=float)
@@ -408,11 +406,9 @@ class COCOeval2:
                         precision[t, :, k, a, m] = np.array(q)
                         scores[t, :, k, a, m] = np.array(ss)
 
-                        # riza
                         num_tp[t, k, a, m] = tp[-1]
                         num_fp[t, k, a, m] = fp[-1]
                         num_fn[t, k, a, m] = npig - tp[-1]
-                        # riza
 
         self.eval = {
             "params": p,
@@ -421,7 +417,7 @@ class COCOeval2:
             "precision": precision,
             "recall": recall,
             "scores": scores,
-            "num_tp": num_tp,  # riza
+            "num_tp": num_tp,
             "num_fp": num_fp,
             "num_fn": num_fn,
             "scores_tp": scores_tp,
