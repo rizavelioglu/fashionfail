@@ -1,6 +1,8 @@
+from itertools import cycle
+
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import PrecisionRecallDisplay, roc_auc_score, roc_curve
 
 from fashionfail.process_preds import load_tpu_preds
 from fashionfail.utils import load_categories
@@ -279,3 +281,150 @@ def _plot_violin_overall_with_roc(tps, fps):
     axs[1].legend(fontsize="small")
 
     plt.show()
+
+
+def plot_precision_recall_curve(coco_eval, cat_ids: list, iou: float = 0.50):
+    """
+    Plot Precision-Recall (PR) curves for specified COCO evaluation results.
+
+    This function generates and displays PR curves for multiple categories based on COCO evaluation data.
+    The curves illustrate the trade-off between precision and recall at the given IoU threshold.
+
+    Args:
+        coco_eval (COCOeval): The COCO evaluation object containing evaluation results.
+        cat_ids (list): A list of category IDs for which to plot PR curves.
+        iou (float, optional): The IoU (Intersection over Union) threshold. Default is 0.5.
+
+    Returns:
+        None
+
+    Example:
+        >>> from pycocotools.cocoeval import COCOeval
+        >>> cat_ids = [1, 2, 3]  # List of category IDs to plot PR curves for
+        >>> coco_eval = COCOeval(...)  # Initialize with your COCO evaluation results
+        >>> plot_precision_recall_curve(coco_eval, cat_ids, iou=0.5)
+    Example:
+        >>> plot_precision_recall_curve(coco_eval, cat_ids=[23], iou=0.5)  # Also works for a single category
+
+    Note:
+        - The function uses COCO evaluation data to plot PR curves.
+        - It supports plotting PR curves for multiple categories in different colors.
+        - Iso-F1 curves are also included in the plot for reference.
+
+    """
+    # map iou to idx, e.g. 0.5-->0, 0.95-->9
+    iou_idx = _map_iou_to_idx(iou)
+
+    # setup plot details
+    colors = cycle(["navy", "turquoise", "darkorange", "cornflowerblue", "teal"])
+
+    _, ax = plt.subplots(figsize=(7, 8))
+
+    f_scores = np.linspace(0.2, 0.8, num=4)
+    for f_score in f_scores:
+        x = np.linspace(0.01, 1)
+        y = f_score * x / (2 * x - f_score)
+        (l,) = plt.plot(x[y >= 0], y[y >= 0], color="gray", alpha=0.2)
+        plt.annotate(f"f1={f_score:0.1f}", xy=(0.9, y[45] + 0.02))
+
+    for catId, color in zip(cat_ids, colors):
+        pr = coco_eval.eval["precision"][iou_idx, :, catId, 0, 2]
+
+        pr_display = PrecisionRecallDisplay(
+            recall=coco_eval.params.recThrs,
+            precision=pr,
+            average_precision=np.mean(pr),
+        )
+        pr_display.plot(ax=ax, name=f"Class: {catId}", color=color)
+
+    # add the legend for the iso-f1 curves
+    handles, labels = pr_display.ax_.get_legend_handles_labels()
+    handles.extend([l])
+    labels.extend(["iso-f1 curves"])
+    # set the legend and the axes
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.legend(handles=handles, labels=labels, loc="best")
+    ax.set_title(f"Precision-Recall curve @IoU={iou}")
+
+    plt.show()
+
+
+def plot_precision_recall_curves(coco_eval):
+    """
+    Plot Precision-Recall (PR) curves for multiple classes and IoU thresholds.
+
+    This function generates and displays PR curves for multiple object detection classes at two different IoU thresholds
+    (0.50 and 0.75). The PR curves illustrate the trade-off between precision and recall.
+
+    Args:
+        coco_eval (COCOeval): The COCO evaluation object containing evaluation results.
+
+    Returns:
+        None
+
+    Example:
+        >>> from pycocotools.cocoeval import COCOeval
+        >>> coco_eval = COCOeval(...)  # Initialize with your COCO evaluation results
+        >>> plot_precision_recall_curves(coco_eval)
+
+    Note:
+        - The function uses COCO evaluation data to plot PR curves for selected classes.
+        - PR curves are displayed for both IoU thresholds.
+        - The legend indicates the IoU value for each curve.
+
+    """
+    # Get classes/categories
+    class_ids = list(load_categories().keys())[:28]
+    class_names = list(load_categories().values())[:28]
+
+    # Create a subplot grid
+    num_rows = (len(class_ids) + 3) // 4
+    num_cols = 4
+
+    fig, axs = plt.subplots(num_rows, num_cols, figsize=(15, 3 * num_rows))
+    fig.suptitle("Precision-Recall curve per Class - @IoU=[.50, .75]", fontsize=16)
+    fig.tight_layout(pad=3.0)
+
+    # Plot histograms for each class
+    for i, class_id in enumerate(class_ids):
+        row = i // num_cols
+        col = i % num_cols
+        ax = axs[row, col]
+
+        for iou_idx, iou in zip([0, 5], [".50", ".75"]):
+            # Retrieve precision values
+            pr = coco_eval.eval["precision"][iou_idx, :, class_id, 0, 2]
+            # Skip if no precision calculated
+            if len(pr[pr > -1]) == 0:
+                ax.axis("off")
+                continue
+
+            pr_display = PrecisionRecallDisplay(
+                recall=coco_eval.params.recThrs,
+                precision=pr,
+                average_precision=np.mean(pr),
+            )
+            pr_display.plot(ax=ax, name=f"IoU={iou}")
+            ax.legend(prop={"size": 8}, loc="lower left")
+            ax.set_title(f"{class_id}: {class_names[class_id]:.25}")
+
+    # Hide unused subplots
+    for i in range(len(class_ids), num_rows * num_cols):
+        row = i // num_cols
+        col = i % num_cols
+        fig.delaxes(axs[row, col])
+
+    plt.show()
+
+
+def _map_iou_to_idx(iou):
+    # Check if the input value is within the specified range
+    iou_thresholds = np.arange(0.5, 1, 0.05).round(2)
+    if iou not in iou_thresholds:
+        raise ValueError(f"IoU value must be one of {iou_thresholds}, got: {iou}.")
+
+    iou_to_idx = {round(iou, 2): idx for idx, iou in enumerate(iou_thresholds)}
+    iou_idx = iou_to_idx[iou]
+
+    return iou_idx
