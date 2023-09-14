@@ -3,6 +3,7 @@ from pprint import pprint
 import numpy as np
 import pandas as pd
 import torch
+from IPython.core.display_functions import display
 from loguru import logger
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
@@ -47,6 +48,27 @@ def get_cli_args():
     return parser.parse_args()
 
 
+def _print_per_class_metrics(coco: COCO, coco_eval: COCOeval) -> None:
+    # Display per class metrics
+    cat_ids = list(range(28))
+    cat_names = [cat["name"] for cat in coco.loadCats(ids=cat_ids)]
+
+    m_aps = []
+    for c in range(0, 28):
+        pr = coco_eval.eval["precision"][:, :, c, 0, 2]
+        if not np.isnan(pr).all():
+            m_ap = np.nanmean(pr)  # Use np.nanmean to handle NaN values
+        else:
+            m_ap = 0.0  # Set a default value if there are no positive detections
+        m_aps.append(m_ap)
+
+    cats = pd.DataFrame({"name": cat_names, "AP": m_aps})
+    cats["name"] = cats["name"].str.slice(
+        0, 15
+    )  # Limit the number of characters to 15 for better readability
+    display(cats)
+
+
 def eval_with_coco(args) -> None:
     # Convert AMRCNN predictions to COCO format
     annotation_file = convert_tpu_preds_to_coco(
@@ -65,6 +87,7 @@ def eval_with_coco(args) -> None:
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
+    _print_per_class_metrics(coco, coco_eval)
 
 
 def eval_with_torchmetrics(args) -> None:
