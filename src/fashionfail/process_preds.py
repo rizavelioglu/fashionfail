@@ -12,9 +12,31 @@ from fashionfail.utils import yxyx_to_xyxy
 
 
 def load_tpu_preds(path_to_preds: str, preprocess: bool = True) -> pd.DataFrame:
-    # Load tpu predictions to dataframe
+    """
+    Load predictions from a file and optionally apply preprocessing.
+
+    Predictions must have the following attributes:
+    {
+        "image_file": full name of the image,
+        "boxes": list of bounding box coordinates,
+        "classes": list of class id's,
+        "scores": list of floats,
+        "masks": list of binary values,
+    }
+
+    Args:
+        path_to_preds (str): Path to the predictions file.
+        preprocess (bool, optional): Whether to apply basic preprocessing. Defaults to True.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the loaded predictions.
+    """
+    # Load predictions to a DataFrame
     preds = np.load(path_to_preds, allow_pickle=True)
-    df_preds = pd.DataFrame.from_records(preds)
+    if Path(path_to_preds).suffix == ".npz":
+        df_preds = pd.DataFrame.from_records(preds["data"])
+    else:
+        df_preds = pd.DataFrame.from_records(preds)
     logger.info(f"Predictions loaded from: {path_to_preds}")
 
     # Apply basic preprocessing on request
