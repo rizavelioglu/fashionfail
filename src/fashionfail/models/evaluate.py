@@ -176,13 +176,12 @@ def eval_with_torchmetrics(args) -> None:
 if __name__ == "__main__":
     cli_args = get_cli_args()
 
-    match cli_args.eval_method:
-        case "COCO":
-            eval_with_coco(cli_args)
-        case "TorchMetrics":
-            eval_with_torchmetrics(cli_args)
-        case "all":
-            logger.info("=" * 10 + "Evaluating with COCOeval" + "=" * 10)
-            eval_with_coco(cli_args)
-            logger.info("=" * 10 + "Evaluating with TorchMetrics" + "=" * 10)
-            eval_with_torchmetrics(cli_args)
+    if cli_args.eval_method == "COCO":
+        eval_with_coco(cli_args)
+    elif cli_args.eval_method == "TorchMetrics":
+        eval_with_torchmetrics(cli_args)
+    else:
+        logger.info("=" * 10 + "Evaluating with COCOeval" + "=" * 10)
+        eval_with_coco(cli_args)
+        logger.info("=" * 10 + "Evaluating with TorchMetrics" + "=" * 10)
+        eval_with_torchmetrics(cli_args)
