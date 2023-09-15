@@ -12,7 +12,7 @@ name = "fashionfail"
 version = "0.0.1"
 description = "Official Repository of FashionFail paper"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 authors = [
   {email = "rvelioglu@techfak.uni-bielefeld.de", name = "Riza Velioglu"}
 ]
