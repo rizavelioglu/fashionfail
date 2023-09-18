@@ -8,11 +8,14 @@ from loguru import logger
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
-from torchvision.ops import box_convert
 from tqdm import tqdm
 
-from fashionfail.process_preds import convert_tpu_preds_to_coco, load_tpu_preds
-from fashionfail.utils import yxyx_to_xyxy
+from fashionfail.process_preds import (
+    bbox_conversion_formats,
+    convert_preds_to_coco,
+    load_tpu_preds,
+)
+from fashionfail.utils import extended_box_convert
 
 
 def get_cli_args():
@@ -44,6 +47,13 @@ def get_cli_args():
         choices=["COCO", "TorchMetrics", "all"],
         help="The name of the evaluation framework to be used, or `all` to run all eval methods.",
     )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        required=True,
+        choices=["amrcnn", "fformer"],
+        help="The name of the model, either 'amrcnn' or 'fformer'.",
+    )
 
     return parser.parse_args()
 
@@ -70,9 +80,9 @@ def _print_per_class_metrics(coco: COCO, coco_eval: COCOeval) -> None:
 
 
 def eval_with_coco(args) -> None:
-    # Convert AMRCNN predictions to COCO format
-    annotation_file = convert_tpu_preds_to_coco(
-        preds_path=args.preds_path, anns_path=args.anns_path
+    # Convert predictions to COCO format
+    annotation_file = convert_preds_to_coco(
+        preds_path=args.preds_path, anns_path=args.anns_path, model_name=args.model_name
     )
 
     # Load GT annotations
@@ -125,7 +135,9 @@ def eval_with_torchmetrics(args) -> None:
             )
 
         gt_box = np.array(gt_df["bbox"].values[0])
-        gt_class = np.array(gt_df["category_id"].values[0]) + 1
+        gt_class = np.array(gt_df["category_id"].values[0])
+        # Increment GT class ([0,45]) to match with `amrcnn` predictions ([1,46])
+        gt_class = gt_class + 1 if args.model_name == "amrcnn" else gt_class
 
         # Get detections for the image
         dt_df = df_preds[df_preds.image_file == img_name]
@@ -137,10 +149,14 @@ def eval_with_torchmetrics(args) -> None:
         if dt_df["boxes"].values[0].size == 0:
             dt_boxes = torch.tensor([])
         else:
-            dt_boxes = box_convert(
-                yxyx_to_xyxy(torch.tensor(dt_df["boxes"].values[0])),
-                in_fmt="xyxy",
-                out_fmt="xywh",
+            # Convert bboxes according to their format
+            in_fmt, out_fmt = bbox_conversion_formats.get(args.model_name, (None, None))
+            if in_fmt is None or out_fmt is None:
+                raise ValueError(f"Unsupported model_name: {args.model_name}")
+            dt_boxes = extended_box_convert(
+                torch.tensor(dt_df["boxes"].values[0]),
+                in_fmt=in_fmt,
+                out_fmt=out_fmt,
             )
         dt_scores = dt_df["scores"].values[0]
         dt_classes = dt_df["classes"].values[0]
@@ -158,7 +174,7 @@ def eval_with_torchmetrics(args) -> None:
                 boxes=torch.unsqueeze(torch.tensor(gt_box), dim=0)
                 if gt_box.ndim == 1
                 else torch.tensor(gt_box),
-                labels=torch.tensor([gt_class])
+                labels=torch.unsqueeze(torch.tensor(gt_class), dim=0)
                 if gt_class.size == 1
                 else torch.tensor(gt_class),
             )
