@@ -90,7 +90,7 @@ def _filter_preds_for_classes(row):
     """
 
     filtered_classes = np.array(
-        [class_id for class_id in row["classes"] if 1 <= class_id <= 28]
+        [class_id for class_id in row["classes"] if class_id <= 28]
     )
     filtered_scores = np.array(
         [
