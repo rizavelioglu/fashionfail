@@ -6,9 +6,35 @@ import pandas as pd
 import torch
 from loguru import logger
 from pycocotools.coco import COCO
-from torchvision.ops import box_convert
 
-from fashionfail.utils import yxyx_to_xyxy
+from fashionfail.utils import extended_box_convert
+
+bbox_conversion_formats = {"amrcnn": ("yxyx", "xywh"), "fformer": ("xyxy", "xywh")}
+"""
+A dictionary that maps model names to bounding box (bbox) conversion formats.
+
+Each key represents a model name, and the corresponding value is a tuple of two strings.
+The first string in the tuple represents the input format (in_fmt), and the second string
+represents the output format (out_fmt) for bounding box conversions.
+
+Supported Models and Formats:
+- "amrcnn": Input format is "yxyx" (top-left and bottom-right corners),
+            and output format is "xywh" (x, y, width, height).
+- "fformer": Input format is "xyxy" (top-left and bottom-right corners),
+            and output format is "xywh" (x, y, width, height).
+
+Usage:
+You can use this dictionary to determine the appropriate input and output formats
+for bounding box conversions based on the model name.
+
+Example:
+model_name = "amrcnn"
+in_fmt, out_fmt = bbox_formats.get(model_name, (None, None))
+if in_fmt and out_fmt:
+    # Use in_fmt and out_fmt for bbox conversions.
+else:
+    # Handle the case where the model name is not found in the dictionary.
+"""
 
 
 def load_tpu_preds(path_to_preds: str, preprocess: bool = True) -> pd.DataFrame:
@@ -128,10 +154,10 @@ def clean_df_preds(df_preds: pd.DataFrame) -> pd.DataFrame:
     return df_preds
 
 
-def convert_tpu_preds_to_coco(preds_path: str, anns_path: str) -> str:
-    logger.info("Converting AMRCNN predictions to COCO format...")
+def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> str:
+    logger.info("Converting raw predictions to COCO format...")
     # The path to the resulting .json file
-    output_json_file = preds_path.replace(".npy", "-coco.json")
+    output_json_file = preds_path.replace(Path(preds_path).suffix, "-coco.json")
 
     if Path(output_json_file).exists():
         logger.warning(
@@ -152,17 +178,18 @@ def convert_tpu_preds_to_coco(preds_path: str, anns_path: str) -> str:
         columns={"classes": "class", "boxes": "bbox", "scores": "score"}
     )
 
-    # Apply the box_convert function to each box in the "bbox" column
+    # Apply the extended_box_convert function to each box in the "bbox" column
+    in_fmt, out_fmt = bbox_conversion_formats.get(model_name, (None, None))
+    if in_fmt is None or out_fmt is None:
+        raise ValueError(f"Unsupported model_name: {model_name}")
     df_exploded["bbox"] = df_exploded["bbox"].apply(
-        lambda bbox: box_convert(
-            yxyx_to_xyxy(torch.tensor(bbox)), in_fmt="xyxy", out_fmt="xywh"
+        lambda bbox: extended_box_convert(
+            torch.tensor(bbox), in_fmt=in_fmt, out_fmt=out_fmt
         ).numpy()
     )
 
-    # Round coordinates to the nearest tenth of a pixel
-    df_exploded["bbox"] = df_exploded["bbox"].apply(
-        lambda bbox: [round(coord, 1) for coord in bbox]
-    )
+    # Sort predictions by score
+    df_exploded = df_exploded.sort_values(["image_file", "score"], ascending=False)
 
     # Load GT annotations (required for setting `image_id`)
     coco = COCO(anns_path)
@@ -172,16 +199,28 @@ def convert_tpu_preds_to_coco(preds_path: str, anns_path: str) -> str:
     # Convert the DataFrame to a list of dictionaries in the desired format
     json_data = []
     for _, row in df_exploded.iterrows():
-        image_id = coco_imgs[
-            coco_imgs.file_name == row["image_file"].split("/")[1]
-        ].id.values[0]
+        try:
+            image_id = coco_imgs[
+                coco_imgs.file_name == row["image_file"].split("/")[1]
+            ].id.values[0]
+        except IndexError:
+            try:
+                image_id = coco_imgs[
+                    coco_imgs.file_name == row["image_file"]
+                ].id.values[0]
+            except Exception as e:
+                # Handle the exception here, e.g., log an error message or take appropriate action
+                print(f"An error occurred: {str(e)}")
+                break
 
         json_data.append(
             {
                 "image_id": int(image_id),
-                # subtract 1 to match official annotation
-                "category_id": int(row["class"]) - 1,
-                # convert bbox coord.s to rounded floats
+                # Subtract 1 to match official annotation in `amrcnn`
+                "category_id": int(row["class"]) - 1
+                if model_name == "amrcnn"
+                else int(row["class"]),
+                # Round coordinates to the nearest tenth of a pixel
                 "bbox": [round(float(coord), 1) for coord in row["bbox"]],
                 "score": float(row["score"]),
             }
