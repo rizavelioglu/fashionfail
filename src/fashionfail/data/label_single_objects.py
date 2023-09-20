@@ -7,6 +7,24 @@ from pathlib import Path
 from PIL import Image, ImageTk
 
 
+def get_cli_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--images_dir",
+        type=str,
+        required=True,
+        help="Full path to the images directory.",
+    )
+    parser.add_argument(
+        "--out_path",
+        type=str,
+        required=True,
+        help="Full path to the file which stores labeled data.",
+    )
+
+    return parser.parse_args()
+
+
 class ImageFilterGUI:
     def __init__(self, image_names, images_dir: Path, labels_dir: Path):
         self.images_dir = images_dir
@@ -165,19 +183,21 @@ class ImageFilterGUI:
 
 
 if __name__ == "__main__":
+    import argparse
     import logging
     import os
 
-    BASE_DIR = Path("/home/rizavelioglu/work/data/fashionfail/")
-    IMAGES_DIR = BASE_DIR / "images"
-    LABELS_DIR = BASE_DIR / "labeled_images.json"
+    # Parse cli arguments
+    args = get_cli_args()
+    IMAGES_DIR = Path(args.images_dir)
+    LABELS_DIR = Path(args.out_path)
 
     def get_image_names():
         image_names = [f.name for f in IMAGES_DIR.iterdir()]
 
         # Filter out already labeled images, if any
         if os.path.exists(LABELS_DIR):
-            logging.warning("Filtering already labeled images...")
+            logging.info("Filtering already labeled images...")
             image_names = filter_image_names(image_names, LABELS_DIR)
 
         image_names.sort()
@@ -201,7 +221,9 @@ if __name__ == "__main__":
 
         return filtered_paths
 
+    # Retrieve all image names in the images directory that have not yet been labeled.
     image_filenames = get_image_names()
+
     # Check if there are images to be labeled
     if image_filenames:
         gui = ImageFilterGUI(
@@ -211,4 +233,4 @@ if __name__ == "__main__":
         )
         gui.run()
     else:
-        logging.warning("All images are labeled! Quitting...")
+        logging.info("All images are labeled! Quitting...")
