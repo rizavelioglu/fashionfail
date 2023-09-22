@@ -1,20 +1,30 @@
 import json
 from functools import lru_cache
 from pathlib import Path
+from typing import Any, Union
 
 import torch
 from torchvision.ops import box_convert
 
 
 @lru_cache
-def load_categories() -> dict:
+def load_categories(
+    return_raw_categories: bool = False,
+) -> Union[dict[int, str], list[dict[str, Any]]]:
     """
     Load Fashionpedia categories from a JSON file and return a dictionary mapping
     category IDs to their corresponding names.
 
+    Args:
+        return_raw_categories (bool, optional): If True, return the raw category
+            dictionary. If False (default), return a dictionary where keys are
+            category IDs (integers) and values are corresponding category names
+            (strings).
+
     Returns:
-        dict: A dictionary where keys are category IDs (integers) and values are
-        corresponding category names (strings).
+        Union[Dict[int, str], List[Dict[str, Any]]]: A dictionary where keys are
+        category IDs (integers) and values are corresponding category names (strings).
+        If `return_raw_categories` is True, returns the raw category dictionary.
 
     Raises:
         FileNotFoundError: If the expected JSON file 'categories.json' is not found
@@ -25,18 +35,23 @@ def load_categories() -> dict:
         >>> print(category_id_to_name[23])
         'Shoe'
     """
+    # TODO: replace the absolute path. Download it when it's not found.
     expected_path = Path(
         "/home/rizavelioglu/work/repos/segmentation/segmentation/visualization/categories.json"
     )
 
-    if expected_path.exists():
-        # Parse Fashionpedia categories.
-        with open(expected_path) as fp:
-            categories = json.load(fp)
+    if not expected_path.exists():
+        raise FileNotFoundError(f"`categories.json` expected at `{expected_path}`")
+
+    # Load official Fashionpedia categories
+    with open(expected_path) as fp:
+        categories = json.load(fp)
+
+    if return_raw_categories:
+        return categories
+    else:
         category_id_to_name = {d["id"]: d["name"] for d in categories}
         return category_id_to_name
-
-    raise FileNotFoundError(f"`categories.json` expected at `{expected_path}`")
 
 
 def _box_yxyx_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:
