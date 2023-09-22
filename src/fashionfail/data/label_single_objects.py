@@ -1,9 +1,12 @@
+import argparse
 import json
+import os
 import time
 import tkinter as tk
 import tkinter.messagebox
 from pathlib import Path
 
+from loguru import logger
 from PIL import Image, ImageTk
 
 
@@ -183,10 +186,6 @@ class ImageFilterGUI:
 
 
 if __name__ == "__main__":
-    import argparse
-    import logging
-    import os
-
     # Parse cli arguments
     args = get_cli_args()
     IMAGES_DIR = Path(args.images_dir)
@@ -197,7 +196,7 @@ if __name__ == "__main__":
 
         # Filter out already labeled images, if any
         if os.path.exists(LABELS_DIR):
-            logging.info("Filtering already labeled images...")
+            logger.info("Filtering already labeled images...")
             image_names = filter_image_names(image_names, LABELS_DIR)
 
         image_names.sort()
@@ -233,4 +232,4 @@ if __name__ == "__main__":
         )
         gui.run()
     else:
-        logging.info("All images are labeled! Quitting...")
+        logger.info("All images are labeled! Quitting...")
