@@ -1,16 +1,16 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Union
 
 import torch
+from pycocotools.coco import COCO
 from torchvision.ops import box_convert
 
 
 @lru_cache
 def load_categories(
     return_raw_categories: bool = False,
-) -> Union[dict[int, str], list[dict[str, Any]]]:
+):
     """
     Load Fashionpedia categories from a JSON file and return a dictionary mapping
     category IDs to their corresponding names.
@@ -52,6 +52,40 @@ def load_categories(
     else:
         category_id_to_name = {d["id"]: d["name"] for d in categories}
         return category_id_to_name
+
+
+def print_category_counts_from_coco(coco_annotation_file: str) -> None:
+    """
+    Print category counts from a COCO annotation file.
+
+    Args:
+        coco_annotation_file (str): Path to the COCO annotation file.
+
+    Example:
+        >>> print_category_counts_from_coco("path/to/coco/annotation.json")
+    """
+    # Load COCO annotation from file
+    coco_ann = COCO(coco_annotation_file)
+    # Load categories
+    categories = list(load_categories().values())
+
+    print("_" * 44)
+    print(f"| {'id':<2} | {'cat':<24} | #samples |")  # header
+    print(f"|{'-'*4}|{'-'*26}|{'-'*10}|")  # separator
+
+    total = 0
+
+    for i in range(0, len(categories)):
+        anns = coco_ann.getAnnIds(catIds=[i])
+        if anns:
+            print(f"| {i:<2} | {categories[i][:24]:<24} | {len(anns):<8} |")
+            total += len(anns)
+
+    print(f"{'-'*44}")
+    print(f"{'Total':<31} | {total:<8} |")
+
+    # remove annotations from memory
+    del coco_ann
 
 
 def _box_yxyx_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:

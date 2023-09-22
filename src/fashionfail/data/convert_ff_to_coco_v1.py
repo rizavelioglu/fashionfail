@@ -14,7 +14,8 @@ from sahi.utils.file import save_json
 from supervision.dataset.utils import approximate_mask_with_polygons
 from torchvision.ops import box_convert
 from tqdm import tqdm
-from utils import load_categories
+
+from fashionfail.utils import load_categories
 
 
 def mask_to_polygon(mask):
