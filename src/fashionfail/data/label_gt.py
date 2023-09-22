@@ -8,10 +8,13 @@ import tkinter.messagebox
 from pathlib import Path
 
 import cv2
+import pandas as pd
 import PIL
 import supervision as sv
 from loguru import logger
 from PIL import Image, ImageTk
+
+from fashionfail.utils import load_categories
 
 
 def get_cli_args():
@@ -26,7 +29,13 @@ def get_cli_args():
         "--anns_dir",
         type=str,
         required=True,
-        help="Full path to the (bbox and masks) annotations directory.",
+        help="Full path to the bbox and masks annotations directory.",
+    )
+    parser.add_argument(
+        "--label_anns_file",
+        type=str,
+        required=True,
+        help="Full path to the label annotations file.",
     )
     parser.add_argument(
         "--out_path",
@@ -39,10 +48,10 @@ def get_cli_args():
 
 
 class ImageFilterGUI:
-    def __init__(self, image_names, images_dir: Path, labels_dir: Path):
+    def __init__(self, image_names, images_dir: Path, out_path: Path):
         self.images_dir = images_dir
         self.image_paths = image_names
-        self.labeled_images_file = labels_dir
+        self.labeled_images_file = out_path
         self.nb_of_images = len(self.image_paths)
         self.start_time = time.time()
 
@@ -52,7 +61,7 @@ class ImageFilterGUI:
         self.canvas.create_text(
             620,
             10,
-            text="Is the segmentation mask correctly annotated?",
+            text="Are the label, mask, and bbox annotations accurate?",
             font="Verdana 10 bold",
             anchor=tk.CENTER,
         )
@@ -83,12 +92,25 @@ class ImageFilterGUI:
 
     def display_image(self):
         image_path = self.image_paths[self.current_image_index]
-        # Show original image
+        # Show image name on the canvas
+        self.canvas.delete("image_name")
+        self.canvas.create_text(
+            620,
+            30,
+            text=f"{image_path}",
+            font="Verdana 9",
+            anchor=tk.CENTER,
+            tags="image_name",
+        )
+
+        # Show original image with its label
         image = Image.open(self.images_dir / image_path)
         image = image.resize((500, 500))
         img_org = ImageTk.PhotoImage(image)
 
-        label1 = tk.Label(image=img_org, text="Original Image:", compound="bottom")
+        class_id = DF_LABELS[DF_LABELS.image_name == image_path].class_id.values[0]
+        class_name = CATEGORY_ID_TO_NAME[class_id]
+        label1 = tk.Label(image=img_org, text=f"Label: {class_name}", compound="bottom")
         label1.image = img_org
         label1.place(x=0, y=60)
 
@@ -220,17 +242,21 @@ if __name__ == "__main__":
     # Parse cli arguments
     args = get_cli_args()
     IMAGES_DIR = Path(args.images_dir)
-    LABELS_DIR = Path(args.out_path)
+    OUT_FILE = Path(args.out_path)
     GT_SAVE_DIR = Path(args.anns_dir)
+
+    # Load label annotations and category names
+    DF_LABELS = pd.read_csv(args.label_anns_file)
+    CATEGORY_ID_TO_NAME = load_categories()
 
     def get_image_names():
         # Get only those picture names that have ground truth
         image_names = [f.stem + ".jpg" for f in GT_SAVE_DIR.iterdir()]
 
         # Filter out already labeled images, if any
-        if os.path.exists(LABELS_DIR):
+        if os.path.exists(OUT_FILE):
             logger.info("Filtering already labeled images...")
-            image_names = filter_image_names(image_names, LABELS_DIR)
+            image_names = filter_image_names(image_names, OUT_FILE)
 
         image_names.sort()
 
@@ -284,7 +310,7 @@ if __name__ == "__main__":
         gui = ImageFilterGUI(
             image_filenames,
             images_dir=IMAGES_DIR,
-            labels_dir=LABELS_DIR,
+            out_path=OUT_FILE,
         )
         gui.run()
     else:
