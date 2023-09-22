@@ -10,7 +10,16 @@ Here's the full pipeline of creating FashionFail Dataset:
 
 2. Labeled images as *"single/clean"* images using `/fashionfail/label_single_objects.py`
     - ***10,860*** images are labeled and results are stored at `/data/fashionfail/labeled_images.json`
-<br></br>
+
+   <details> <summary> how to run script: </summary>
+
+   ```python
+   python label_single_objects.py \
+       --images_dir="/home/rizavelioglu/work/data/fashionfail/images" \
+       --out_path="/home/rizavelioglu/work/data/fashionfail/labeled_images.json"
+   ```
+   </details>
+
 
 3. Label categories of the images using *text-davinci-003* in `/fashionfail/notebooks/02_label_cat_gpt3-5.ipynb`
     - make preds for only the *single* images labeled previously.
@@ -22,11 +31,30 @@ Here's the full pipeline of creating FashionFail Dataset:
 
 4. Generate Ground-Truths (masks and bboxes) using *GroundingDINO+SAM*: `/dino_sam/GroundingDINO+SAM.ipynb`
     - the raw annotations (*3,901*) are saved at `/data/fashionfail/annotations/`, e.g. `/adi_15_3.pkl` --> 1 pickle file per image, with *bbox, confidence(bbox), mask*
-<br></br>
+   <details> <summary> how to run script: </summary>
+   > [!NOTE]<br>Note that this script must be run inside `dino_sam` environment!
+
+   ```python
+   python annotate_boxes_and_masks.py \
+       --images_dir "/home/rizavelioglu/work/data/fashionfail/data-v2/images/" \
+       --out_dir "/home/rizavelioglu/work/data/fashionfail/data-v2/annotations/" \
+       --image_names "/home/rizavelioglu/work/data/fashionfail/data-v2/labeled_images.json"
+   ```
+   </details>
+
 
 5. Quality check of GTs using `/fashionfail/label_gt.py`
     - ***1,096*** images (of 1,015 are fine) are labeled and results stored at `/data/fashionfail/labeled_images_GT.json`
-<br></br>
+   <details> <summary> how to run script: </summary>
+
+   ```python
+   python label_gt.py \
+       --images_dir="/home/rizavelioglu/work/data/fashionfail/data-v2/images/" \
+       --anns_dir="/home/rizavelioglu/work/data/fashionfail/data-v2/annotations/" \
+       --out_path="/home/rizavelioglu/work/data/fashionfail/data-v2/labeled_images_GT.json"
+   ```
+   </details>
+
 
 <details>
   <summary>[outdated] 6. "Complete" generated GTs.\</summary>
@@ -44,7 +72,7 @@ those classes. After that, we manually check the predicted bounding boxes and ch
 ```python
 with open("/home/rizavelioglu/work/data/fashionfail/labeled_images_GT.json", "r+") as f:
     labeled_images_data = json.load(f)
-    
+
 import shutil
 src = "/home/rizavelioglu/work/data/fashionfail/images/"
 dst = "/home/rizavelioglu/work/data/fashionfail/images-sample/"
