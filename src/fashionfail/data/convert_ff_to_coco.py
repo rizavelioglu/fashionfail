@@ -1,13 +1,13 @@
 import argparse
-import os
+import json
 import pickle
 
+import numpy as np
 import pandas as pd
 import torch
+from loguru import logger
 from PIL import Image
-from sahi.utils.coco import Coco, CocoAnnotation, CocoImage
-from sahi.utils.file import save_json
-from supervision.dataset.utils import approximate_mask_with_polygons
+from pycocotools import mask as mask_api
 from torchvision.ops import box_convert
 from tqdm import tqdm
 
@@ -44,75 +44,104 @@ def get_cli_args():
     return parser.parse_args()
 
 
-def mask_to_polygon(mask):
-    # Taken from: https://github.com/roboflow/supervision/blob/b47bc808f768fe1287647b7d391ebef254e172e3/supervision
-    # /dataset/formats/coco.py#L111-L120
-    polygon = []
-    if mask is not None:
-        polygon = list(
-            approximate_mask_with_polygons(
-                mask=mask,
-                min_image_area_percentage=0,
-                max_image_area_percentage=1.0,
-                approximation_percentage=0,
-            )[0].flatten()
-        )
-    return [polygon] if polygon else []
+def get_coco_json_format():
+    coco_base = {
+        "info": {
+            "description": "FashionFail Dataset",
+            "url": "https://github.com/rizavelioglu/fashionfail",
+            "version": "1.0",
+            "year": 2023,
+            "contributor": "Riza Velioglu",
+            "date_created": "2023/10/10",
+        },
+        "licenses": [
+            {
+                "url": "https://www.adidas.de/",
+                "id": 1,
+                "name": "Copyright © 2017, adidas AG",
+            },
+        ],
+        "categories": [],
+        "images": [],
+        "annotations": [],
+    }
 
-
-def load_and_process_categories():
-    # Return the mapping
-    category_id_to_name = load_categories()
-    # Also return the raw categories (sahi.COCO requires id's to be strings)
-    raw_categories = load_categories(return_raw_categories=True)
-    categories = [
-        {"id": str(d["id"]), "name": d["name"], "supercategory": d["supercategory"]}
-        for d in raw_categories
-    ]
-    return categories, category_id_to_name
+    return coco_base
 
 
 def main():
-    # Load categories
-    categories, category_id_to_name = load_and_process_categories()
+    # Adapted from: https://www.kaggle.com/code/coldfir3/efficient-coco-dataset-generator
 
-    # Init sahi.Coco instance
-    coco = Coco()
-    # add categories
-    coco.add_categories_from_coco_category_list(categories)
+    # Load categories: FashionFail consists of the first 27 categories
+    categories = load_categories(return_raw_categories=True)[:28]
+
+    coco = get_coco_json_format()
+    coco["categories"] = categories
 
     # Load label-GT
     df_cat = pd.read_csv(LABEL_ANNS_FILE, usecols=["image_name", "class_id"])
+    if df_cat.duplicated("image_name").any():
+        logger.error(
+            "The dataframe for the ground-truth labels have duplicated image names!"
+        )
+        return
 
-    for image_name in tqdm(os.listdir(IMAGES_DIR)):
+    for image_id, image_name in tqdm(
+        enumerate(df_cat.image_name.values.tolist(), start=1), total=df_cat.shape[0]
+    ):
+        # Accumulate image data
+        width, height = Image.open(f"{IMAGES_DIR}/{image_name}").size
+        coco["images"].append(
+            {
+                "id": image_id,
+                "file_name": image_name,
+                "height": height,
+                "width": width,
+                "license": 1,
+            }
+        )
+
         # Load box_mask-GT
         ann_name = image_name.replace(".jpg", ".pkl")
         with open(f"{ANNS_DIR}/{ann_name}", "rb") as f:
             gt = pickle.load(f)
 
+        if len(gt) != 1:
+            logger.error(
+                f"Detections must have exactly 1 detection, but got: {len(gt)}, in {ann_name}."
+            )
+            break
+
         # Load class-GT
         gt_class = df_cat[df_cat.image_name == image_name].class_id.values[0]
         gt.class_id = int(gt_class)
 
-        # Load image
-        im = Image.open(f"{IMAGES_DIR}/{image_name}")
-        width, height = im.size
-        coco_image = CocoImage(file_name=image_name, height=height, width=width)
+        # Process the mask
+        mask = np.asfortranarray(gt.mask.squeeze().astype(np.uint8))  # Binary mask
+        segmentation = mask_api.encode(mask)  # Encoding it back to rle (coco format)
+        segmentation["counts"] = segmentation["counts"].decode(
+            "utf-8"
+        )  # converting from binary to utf-8
+        area = mask_api.area(segmentation).item()  # calculating the area
 
-        # Add annotations
-        coco_image.add_annotation(
-            CocoAnnotation(
-                bbox=box_convert(
+        # Accumulate annotation data
+        coco["annotations"].append(
+            {
+                "id": image_id,  # we have exactly 1 annotation per image, hence, image_id = annotation_id
+                "image_id": image_id,
+                "category_id": gt.class_id,
+                "area": float(area),
+                "iscrowd": 0,
+                "bbox": box_convert(
                     torch.tensor(gt.xyxy), in_fmt="xyxy", out_fmt="xywh"
                 ).tolist()[0],
-                segmentation=mask_to_polygon(gt.mask.squeeze()),
-                category_id=gt.class_id,
-                category_name=category_id_to_name[gt.class_id],
-            )
+                "segmentation": segmentation,
+            }
         )
-        coco.add_image(coco_image)
 
-    save_json(coco.json, OUTPUT_JSON_FILE)
+    # export as json
+    with open(OUTPUT_JSON_FILE, "w", encoding="utf-8") as outfile:
+        json.dump(coco, outfile, separators=(",", ":"), indent=4)
 
 
 if __name__ == "__main__":
@@ -125,4 +154,6 @@ if __name__ == "__main__":
     LABEL_ANNS_FILE = args.label_anns_file
     OUTPUT_JSON_FILE = args.out_path
 
+    logger.info("Converting the dataset to COCO format...")
     main()
+    logger.info(f"Resulting COCO dataset is saved at: {OUTPUT_JSON_FILE}")
