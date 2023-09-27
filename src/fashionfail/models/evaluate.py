@@ -15,7 +15,7 @@ from fashionfail.process_preds import (
     convert_preds_to_coco,
     load_tpu_preds,
 )
-from fashionfail.utils import extended_box_convert
+from fashionfail.utils import extended_box_convert, load_categories
 
 
 def get_cli_args():
@@ -60,11 +60,11 @@ def get_cli_args():
 
 def _print_per_class_metrics(coco: COCO, coco_eval: COCOeval) -> None:
     # Display per class metrics
-    cat_ids = list(range(28))
+    cat_ids = coco_eval.params.catIds
     cat_names = [cat["name"] for cat in coco.loadCats(ids=cat_ids)]
 
     m_aps = []
-    for c in range(0, 28):
+    for c in cat_ids:
         pr = coco_eval.eval["precision"][:, :, c, 0, 2]
         if not np.isnan(pr).all():
             m_ap = np.nanmean(pr)  # Use np.nanmean to handle NaN values
@@ -93,7 +93,7 @@ def eval_with_coco(args) -> None:
 
     # running evaluation
     coco_eval = COCOeval(coco, coco_dt, args.iou_type)
-    coco_eval.params.catIds = list(range(0, 28))
+    coco_eval.params.catIds = list(load_categories().keys())
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
@@ -112,7 +112,7 @@ def eval_with_torchmetrics(args) -> None:
         class_metrics=True, box_format="xywh", iou_type=args.iou_type
     )
 
-    catIds = list(range(0, 28))
+    catIds = list(load_categories().keys())
 
     for img_info in tqdm(
         coco.imgs.values(), desc="Accumulating predictions and targets"

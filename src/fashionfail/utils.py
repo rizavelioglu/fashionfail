@@ -40,7 +40,7 @@ def load_categories(
     Example:
         >>> category_id_to_name = load_categories()
         >>> print(category_id_to_name[23])
-        'Shoe'
+        'shoe'
 
     Example:
         >>> raw_categories = load_categories(return_raw_categories=True)
@@ -129,7 +129,7 @@ def print_tp_fp_fn_counts(coco_eval, iou_idx=0, area_idx=0, max_dets_idx=2):
 
     total_tp, total_fp, total_fn = 0, 0, 0
 
-    for catId in range(0, 27):
+    for catId in list(load_categories().keys()):
         num_tp = int(coco_eval.eval["num_tp"][iou_idx, catId, area_idx, max_dets_idx])
         num_fp = int(coco_eval.eval["num_fp"][iou_idx, catId, area_idx, max_dets_idx])
         num_fn = int(coco_eval.eval["num_fn"][iou_idx, catId, area_idx, max_dets_idx])
