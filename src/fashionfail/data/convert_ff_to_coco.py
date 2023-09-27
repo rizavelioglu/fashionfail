@@ -72,8 +72,8 @@ def get_coco_json_format():
 def main():
     # Adapted from: https://www.kaggle.com/code/coldfir3/efficient-coco-dataset-generator
 
-    # Load categories: FashionFail consists of the first 27 categories
-    categories = load_categories(return_raw_categories=True)[:28]
+    # Load categories
+    categories = load_categories(return_raw_categories=True)
 
     coco = get_coco_json_format()
     coco["categories"] = categories

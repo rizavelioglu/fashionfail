@@ -61,7 +61,7 @@ def _plot_hist_per_class(df_exploded, num_bins):
     """
     # List of unique classes
     classes = sorted(df_exploded.classes.unique())
-    class_names = list(load_categories().values())[:28]
+    class_names = list(load_categories().values())
 
     # Create a subplot grid
     num_rows = (len(classes) + 3) // 4
@@ -153,8 +153,7 @@ def plot_confidence_violin(
 
 
 def _plot_violin_per_class(tps, fps):
-    # Limit the number of classes to 28 during loading
-    classes = list(load_categories().values())[:28]
+    classes = list(load_categories().values())
 
     # Create a subplot grid
     num_rows = (len(classes) + 3) // 4
@@ -375,8 +374,8 @@ def plot_precision_recall_curves(coco_eval):
 
     """
     # Get classes/categories
-    class_ids = list(load_categories().keys())[:28]
-    class_names = list(load_categories().values())[:28]
+    class_ids = list(load_categories().keys())
+    class_names = list(load_categories().values())
 
     # Create a subplot grid
     num_rows = (len(class_ids) + 3) // 4

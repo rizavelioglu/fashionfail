@@ -14,9 +14,8 @@ from fashionfail.models.cocoeval2 import COCOeval2
 def load_categories(
     return_raw_categories: bool = False,
 ):
-    """
-    Load Fashionpedia categories from a JSON file and return a dictionary mapping
-    category IDs to their corresponding names.
+    r"""
+    Load Fashionpedia categories from a JSON file.
 
     Args:
         return_raw_categories (bool, optional): If True, return the raw category
@@ -33,10 +32,20 @@ def load_categories(
         FileNotFoundError: If the expected JSON file 'categories.json' is not found
         at the specified path.
 
+    Notes:
+        The official Fashionpedia categories constist of 46 categories: :math:`catId \in [0,45]`.
+        However in FashionFail, we use the top-27 categories: :math:`catId \in [0,26]`. Therefore,
+        we return only those top-27 categories in this function.
+
     Example:
         >>> category_id_to_name = load_categories()
         >>> print(category_id_to_name[23])
         'Shoe'
+
+    Example:
+        >>> raw_categories = load_categories(return_raw_categories=True)
+        >>> print(raw_categories[23])
+        {'id': 23, 'name': 'shoe', 'supercategory': 'legs and feet'}
     """
     # TODO: replace the absolute path. Download it when it's not found.
     expected_path = Path(
@@ -46,9 +55,9 @@ def load_categories(
     if not expected_path.exists():
         raise FileNotFoundError(f"`categories.json` expected at `{expected_path}`")
 
-    # Load official Fashionpedia categories
+    # Load top-27 Fashionpedia categories
     with open(expected_path) as fp:
-        categories = json.load(fp)
+        categories = json.load(fp)[:27]
 
     if return_raw_categories:
         return categories
@@ -67,25 +76,22 @@ def print_category_counts_from_coco(coco_annotation_file: str) -> None:
     Example:
         >>> print_category_counts_from_coco("path/to/coco/annotation.json")
     """
-    # Load COCO annotation from file
     coco_ann = COCO(coco_annotation_file)
-    # Load categories
-    categories = list(load_categories().values())
+    categories = load_categories()
+    num_samples = 0
 
     print("_" * 44)
     print(f"| {'id':<2} | {'cat':<24} | #samples |")  # header
     print(f"|{'-'*4}|{'-'*26}|{'-'*10}|")  # separator
 
-    total = 0
-
-    for i in range(0, len(categories)):
-        anns = coco_ann.getAnnIds(catIds=[i])
+    for id, cat in categories.items():
+        anns = coco_ann.getAnnIds(catIds=[id])
         if anns:
-            print(f"| {i:<2} | {categories[i][:24]:<24} | {len(anns):<8} |")
-            total += len(anns)
+            print(f"| {id:<2} | {cat[:24]:<24} | {len(anns):<8} |")
+            num_samples += len(anns)
 
     print(f"{'-'*44}")
-    print(f"{'Total':<31} | {total:<8} |")
+    print(f"{'Total':<31} | {num_samples:<8} |")
 
     # remove annotations from memory
     del coco_ann
