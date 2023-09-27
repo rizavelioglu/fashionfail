@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import PrecisionRecallDisplay, roc_auc_score, roc_curve
 
-from fashionfail.process_preds import load_tpu_preds
+from fashionfail.models.prediction_utils import load_tpu_preds
 from fashionfail.utils import load_categories
 
 

@@ -10,7 +10,7 @@ from pycocotools.cocoeval import COCOeval
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from tqdm import tqdm
 
-from fashionfail.process_preds import (
+from fashionfail.models.prediction_utils import (
     bbox_conversion_formats,
     convert_preds_to_coco,
     load_tpu_preds,

@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -7,15 +8,17 @@ import torch
 from loguru import logger
 from pycocotools.coco import COCO
 
-from fashionfail.utils import extended_box_convert
+from fashionfail.utils import extended_box_convert, load_categories
 
 bbox_conversion_formats = {"amrcnn": ("yxyx", "xywh"), "fformer": ("xyxy", "xywh")}
 """
 A dictionary that maps model names to bounding box (bbox) conversion formats.
 
 Each key represents a model name, and the corresponding value is a tuple of two strings.
-The first string in the tuple represents the input format (in_fmt), and the second string
-represents the output format (out_fmt) for bounding box conversions.
+The first string in the tuple represents the bbox format the model outputs, and the second
+string represents the format we want the bboxes to be in. Therefore, the first string gets
+passed as the `in_fmt`, and the second string gets passed as `out_fmt` to the bounding box
+conversion function.
 
 Supported Models and Formats:
 - "amrcnn": Input format is "yxyx" (top-left and bottom-right corners),
@@ -72,45 +75,37 @@ def load_tpu_preds(path_to_preds: str, preprocess: bool = True) -> pd.DataFrame:
     return df_preds
 
 
-def _filter_preds_for_classes(row):
+def _filter_preds_for_classes(
+    row: pd.Series, class_ids: list[int]
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[dict[str, Any]]]:
     """
-    Filter prediction attributes in the dataframe based on class IDs.
+    Filter prediction attributes based on class IDs.
 
     This function filters classes, scores, boxes, and masks attributes in the predictions
-    dataframe based on the 'class ID'. Class IDs that are larger or equal to 28, such as
-    "sleeve", "neckline", etc., belonging to super-categories "garment parts", "closures",
-    and "decorations", are filtered out.
+    dataframe based on the `class_ids`.
 
     Args:
         row (pd.Series): A Pandas Series representing a row of predictions with attributes
             'classes', 'scores', 'boxes', and 'masks'.
+        class_ids (List[int]): A list of class IDs to filter the predictions.
 
     Returns:
-        tuple: A tuple containing filtered arrays for 'classes', 'scores', 'boxes', and 'masks'.
+        Tuple[np.ndarray, np.ndarray, np.ndarray, List[Dict[str, Any]]]: A tuple containing filtered
+        arrays for 'classes', 'scores', 'boxes', and a list of filtered 'masks'.
     """
+    class_mask = np.isin(row["classes"], class_ids)
+    filtered_classes = row["classes"][class_mask].astype(np.int32)
+    filtered_scores = row["scores"][class_mask].astype(np.float32)
+    filtered_boxes = row["boxes"][class_mask].astype(np.float32)
 
-    filtered_classes = np.array(
-        [class_id for class_id in row["classes"] if class_id <= 28]
+    # Ensure that filtered_boxes has the desired shape when empty
+    filtered_boxes = (
+        filtered_boxes.reshape((0, 4)) if filtered_boxes.size == 0 else filtered_boxes
     )
-    filtered_scores = np.array(
-        [
-            score
-            for i, score in enumerate(row["scores"])
-            if row["classes"][i] in filtered_classes
-        ]
-    )
-    filtered_boxes = np.array(
-        [
-            box
-            for i, box in enumerate(row["boxes"])
-            if row["classes"][i] in filtered_classes
-        ]
-    )
-    filtered_masks = [
-        mask
-        for i, mask in enumerate(row["masks"])
-        if row["classes"][i] in filtered_classes
-    ]
+
+    # Filter masks based on filtered_classes
+    filtered_masks = [row["masks"][i] for i in np.where(class_mask)[0]]
+
     return filtered_classes, filtered_scores, filtered_boxes, filtered_masks
 
 
@@ -135,14 +130,15 @@ def clean_df_preds(df_preds: pd.DataFrame) -> pd.DataFrame:
         f"Number of samples: {nb_of_samples}, of which {nb_of_samples_w_no_preds} "
         f"(%{nb_of_samples_w_no_preds / nb_of_samples * 100:.1f}) have no predictions!"
     )
-    logger.info("Filtering out predictions made for categoryID >= 28...")
 
     # Apply the filtering function to the dataframe and update the predictions
+    class_ids = list(load_categories().keys())
     df_preds["classes"], df_preds["scores"], df_preds["boxes"], df_preds["masks"] = zip(
-        *df_preds.apply(_filter_preds_for_classes, axis=1)
+        *df_preds.apply(_filter_preds_for_classes, axis=1, class_ids=class_ids)
     )
 
     # Logging
+    logger.info(f"Filtered out predictions made for categoryID >= {len(class_ids)}...")
     nb_of_samples_w_no_preds_after_filter = (
         df_preds[df_preds["classes"].apply(lambda x: x.size == 0)].shape[0]
         - nb_of_samples_w_no_preds
