@@ -1,4 +1,5 @@
 from pprint import pprint
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ from pycocotools.cocoeval import COCOeval
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from tqdm import tqdm
 
+from fashionfail.models.cocoeval2 import COCOeval2
 from fashionfail.models.prediction_utils import (
     bbox_conversion_formats,
     convert_preds_to_coco,
@@ -58,10 +60,11 @@ def get_cli_args():
     return parser.parse_args()
 
 
-def _print_per_class_metrics(coco: COCO, coco_eval: COCOeval) -> None:
+def _print_per_class_metrics(coco_eval: COCOeval) -> None:
     # Display per class metrics
+    categories = load_categories()
     cat_ids = coco_eval.params.catIds
-    cat_names = [cat["name"] for cat in coco.loadCats(ids=cat_ids)]
+    cat_names = [categories.get(cat_id) for cat_id in cat_ids]
 
     m_aps = []
     for c in cat_ids:
@@ -79,25 +82,74 @@ def _print_per_class_metrics(coco: COCO, coco_eval: COCOeval) -> None:
     display(cats)
 
 
+def get_cocoeval(
+    annotations_path: str,
+    predictions_path: str,
+    iou_type: Literal["bbox", "segm"] = "bbox",
+    use_coco_eval2: bool = False,
+):
+    """
+    Calculate COCO evaluation metrics for object detection or instance segmentation.
+
+    Args:
+        annotations_path (str): The file path to the ground truth annotations in COCO format.
+        predictions_path (str): The file path to the prediction results in COCO format.
+        iou_type (str): The type of intersection over union (IoU) to use for evaluation.
+            Can be either "bbox" for bounding box IoU or "segm" for segmentation IoU. Default is "bbox".
+        use_coco_eval2 (bool): If True, use a custom implementation (COCOeval2) to compute evaluation metrics,
+            including TP (True Positives), FP (False Positives), and FN (False Negatives) counts.
+            If False, use the standard COCOeval. Default is False.
+
+    Returns:
+        coco_eval: A COCO evaluation object containing computed metrics and results.
+
+    Examples:
+        Run official evalution and get access to 'eval' dict including metrics; 'precision',' recall', 'scores'.
+
+        >>> coco_eval = get_cocoeval(annotations_path, predictions_path, iou_type="bbox", use_coco_eval2=False)
+
+        Run customized evalution and get access to 'eval' dict including metrics; "num_tp", "num_fp", "num_fn",
+        "scores_tp", "scores_fp" alongside 'precision',' recall', 'scores'.
+
+        >>> coco_eval = get_cocoeval(annotations_path, predictions_path, iou_type="bbox", use_coco_eval2=False)
+
+    """
+    # Load GT annotations
+    coco = COCO(annotations_path)
+
+    # Load predictions (dt)
+    coco_dt = coco.loadRes(predictions_path)
+
+    # Use own implementation if specified which returns TP,FP,FN counts
+    if use_coco_eval2:
+        coco_eval = COCOeval2(coco, coco_dt, iouType=iou_type)
+    else:
+        coco_eval = COCOeval(coco, coco_dt, iouType=iou_type)
+
+    # Specify the category IDs for evaluation
+    coco_eval.params.catIds = list(load_categories().keys())
+
+    # Run evaluation
+    coco_eval.evaluate()
+    coco_eval.accumulate()
+
+    return coco_eval
+
+
 def eval_with_coco(args) -> None:
     # Convert predictions to COCO format
-    annotation_file = convert_preds_to_coco(
+    preds_path = convert_preds_to_coco(
         preds_path=args.preds_path, anns_path=args.anns_path, model_name=args.model_name
     )
 
-    # Load GT annotations
-    coco = COCO(args.anns_path)
-
-    # Load predictions (dt)
-    coco_dt = coco.loadRes(annotation_file)
-
-    # running evaluation
-    coco_eval = COCOeval(coco, coco_dt, args.iou_type)
-    coco_eval.params.catIds = list(load_categories().keys())
-    coco_eval.evaluate()
-    coco_eval.accumulate()
+    # Run evaluation and print results
+    coco_eval = get_cocoeval(
+        annotations_path=args.anns_path,
+        predictions_path=preds_path,
+        iou_type=args.iou_type,
+    )
     coco_eval.summarize()
-    _print_per_class_metrics(coco, coco_eval)
+    _print_per_class_metrics(coco_eval)
 
 
 def eval_with_torchmetrics(args) -> None:
