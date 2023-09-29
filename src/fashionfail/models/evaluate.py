@@ -60,7 +60,7 @@ def get_cli_args():
     return parser.parse_args()
 
 
-def _print_per_class_metrics(coco_eval: COCOeval) -> None:
+def print_per_class_metrics(coco_eval: COCOeval) -> None:
     # Display per class metrics
     categories = load_categories()
     cat_ids = coco_eval.params.catIds
@@ -80,6 +80,54 @@ def _print_per_class_metrics(coco_eval: COCOeval) -> None:
         0, 15
     )  # Limit the number of characters to 15 for better readability
     display(cats)
+
+
+def print_tp_fp_fn_counts(coco_eval, iou_idx=0, area_idx=0, max_dets_idx=2):
+    """
+    Print a summary of metrics; TP, FP, FN counts, based on COCO evaluation results.
+
+    Args:
+        coco_eval (COCOeval2): An instance of the custom `COCOeval2` class, which is used as an alternative
+            implementation to calculate and evaluate metrics that are not provided by the official COCOeval class.
+        iou_idx (int, optional): Index for IoU threshold in [0.50, 0.05, 0.95]. Default is 0.
+        area_idx (int, optional): Index for area range in ['all', 'small', 'medium', 'large']. Default is 0.
+        max_dets_idx (int, optional): Index for maximum detections in [1, 10, 100]. Default is 2.
+
+    Example:
+        >>> print_tp_fp_fn_counts(coco_eval)
+    """
+
+    # Can't use `isinstance` because `coco_eval` is modified
+    if coco_eval.__module__ != COCOeval2.__module__:
+        logger.error(f"`coco_eval` object must be an object of {COCOeval2}!")
+        return
+
+    print(
+        f"Metrics @[",
+        f"IoU={coco_eval.params.iouThrs[iou_idx]} |",
+        f"area={coco_eval.params.areaRngLbl[area_idx]} |",
+        f"maxDets={coco_eval.params.maxDets[max_dets_idx]} ]",
+    )
+
+    print("_" * 30)
+    print(f"| {'cat':<2} | {'TP':<5} | {'FP':<5} | {'FN':<5} |")  # header
+    print(f"|{'-' * 5}|{'-' * 7}|{'-' * 7}|{'-' * 7}|")  # separator
+
+    total_tp, total_fp, total_fn = 0, 0, 0
+
+    for catId in list(load_categories().keys()):
+        num_tp = int(coco_eval.eval["num_tp"][iou_idx, catId, area_idx, max_dets_idx])
+        num_fp = int(coco_eval.eval["num_fp"][iou_idx, catId, area_idx, max_dets_idx])
+        num_fn = int(coco_eval.eval["num_fn"][iou_idx, catId, area_idx, max_dets_idx])
+
+        print(f"| {catId:<3} | {num_tp:<5} | {num_fp:<5} | {num_fn:<5} |")
+
+        total_tp += num_tp
+        total_fp += num_fp
+        total_fn += num_fn
+
+    print(f"{'-' * 30}")
+    print(f"{'Total':<5} | {total_tp:<5} | {total_fp:<5} | {total_fn:<5} |")
 
 
 def get_cocoeval(
@@ -149,7 +197,8 @@ def eval_with_coco(args) -> None:
         iou_type=args.iou_type,
     )
     coco_eval.summarize()
-    _print_per_class_metrics(coco_eval)
+    print_per_class_metrics(coco_eval)
+    print_tp_fp_fn_counts(coco_eval)
 
 
 def eval_with_torchmetrics(args) -> None:
