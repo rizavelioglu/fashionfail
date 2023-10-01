@@ -38,13 +38,14 @@ def load_categories(
 
     Example:
         >>> category_id_to_name = load_categories()
-        >>> print(category_id_to_name[23])
-        'shoe'
+        >>> print(category_id_to_name.get(23))
+        shoe
 
     Example:
         >>> raw_categories = load_categories(return_raw_categories=True)
-        >>> print(raw_categories[23])
-        {'id': 23, 'name': 'shoe', 'supercategory': 'legs and feet'}
+        >>> print(raw_categories[:2])
+        [{'id': 0, 'name': 'shirt, blouse', 'supercategory': 'upperbody'},
+        {'id': 1, 'name': 'top, t-shirt, sweatshirt', 'supercategory': 'upperbody'}]
     """
     # TODO: replace the absolute path. Download it when it's not found.
     expected_path = Path(

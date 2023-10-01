@@ -68,7 +68,7 @@ def _plot_hist_per_class(df_exploded, num_bins):
     num_cols = 4
 
     fig, axs = plt.subplots(num_rows, num_cols, figsize=(15, 3 * num_rows))
-    fig.suptitle("Histogram of Softmax Probabilities - per Class", fontsize=16)
+    fig.suptitle("Histogram of confidence scores - per Class", fontsize=16)
     fig.tight_layout(pad=3.0)
 
     # Plot histograms for each class
@@ -80,7 +80,7 @@ def _plot_hist_per_class(df_exploded, num_bins):
         class_data = df_exploded[df_exploded["classes"] == class_id]
         n, bins, patches = ax.hist(class_data["scores"].values, num_bins, density=False)
 
-        ax.set_title(f"{class_id}: {class_names[class_id]:.25}")
+        ax.set_title(f"{class_id}: {class_names[class_id]:.20} ({class_data.shape[0]})")
         ax.set_ylabel("Count")
 
     # Hide unused subplots
@@ -111,10 +111,58 @@ def _plot_hist_overall(df_exploded, num_bins):
 
     ax.set_xlabel("Scores (Softmax probabilities)")
     ax.set_ylabel("Count")
-    ax.set_title("Histogram of Softmax Probabilities - overall")
+    ax.set_title("Histogram of confidence scores - overall")
 
     # Tweak spacing to prevent clipping of ylabel
     fig.tight_layout()
+    plt.show()
+
+
+def plot_confidence_hist_combined():
+    pass
+
+
+def plot_confidence_violin_combined(
+    tps1, fps1, tps2, fps2, dataset1_name, dataset2_name
+):
+    import seaborn as sns
+
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+
+    # Create data and labels for the two datasets
+    data = {
+        "Data": np.concatenate([tps1, fps1, tps2, fps2]),
+        "Dataset": (
+            [dataset1_name] * len(tps1)
+            + [dataset1_name] * len(fps1)
+            + [dataset2_name] * len(tps2)
+            + [dataset2_name] * len(fps2)
+        ),
+        "Type": (
+            ["TP"] * len(tps1)
+            + ["FP"] * len(fps1)
+            + ["TP"] * len(tps2)
+            + ["FP"] * len(fps2)
+        ),
+    }
+
+    # Create a violin plot using Seaborn with split
+    sns.violinplot(
+        data=data,
+        x="Type",
+        y="Data",
+        hue="Dataset",
+        ax=ax,
+        inner="quartile",
+        split=True,
+        scale="count",
+    )
+
+    # configure figure axes
+    ax.yaxis.grid(True, linestyle="--", linewidth=0.3)
+    ax.set_ylabel("confidence")
+    ax.set_title("Combined Violin Plot of confidences - overall @IoU=.50")
+
     plt.show()
 
 
@@ -142,7 +190,8 @@ def plot_confidence_violin(
         >>> tp_scores = np.array([0.9, 0.8, 0.85, 0.88, 0.92])
         >>> fp_scores = np.array([0.6, 0.75, 0.72, 0.78, 0.65])
         >>> plot_confidence_violin(tp_scores, fp_scores, class_wise=True)  # Only class-wise violin plots will be shown.
-        >>> plot_confidence_violin(tp_scores, fp_scores, show_roc_curve=True)  # ROC curve plot will be shown with overall violin plots.
+        >>> plot_confidence_violin(tp_scores, fp_scores, show_roc_curve=True)  # ROC curve plot will be shown with overall violin plot.
+        >>> plot_confidence_violin(tp_scores, fp_scores)  # Only the overall violin plot will be shown.
     """
     if class_wise:
         _plot_violin_per_class(tp_data, fp_data)
@@ -163,27 +212,28 @@ def _plot_violin_per_class(tps, fps):
 
     # Plot histograms for each class
     for i, class_id in enumerate(classes):
-        row = i // num_cols
-        col = i % num_cols
+        row, col = divmod(i, num_cols)
         ax = axs[row, col]
 
-        # Check if the arrays are empty
+        # Check if both arrays are empty
         if not (tps[i].any() or fps[i].any()):
             ax.axis("off")
             continue
-        # TODO: this causes to show wrong value in plots, len(tps[i]) or len(fps[i]). Find a better way
-        elif not tps[i].any():
-            tps[i] = [0.0]  # Add a small value to make it non-empty
-        elif not fps[i].any():
-            fps[i] = [0.0]  # Add a small value to make it non-empty
+        # Use the actual data if available, otherwise assign a small value (0.0)
+        # This ensures the violin plot displays correctly even when data is missing
+        tps_data = tps[i] if tps[i].any() else [0.0]
+        fps_data = fps[i] if fps[i].any() else [0.0]
 
-        parts = ax.violinplot([tps[i], fps[i]], showmedians=False, showextrema=False)
+        parts = ax.violinplot(
+            [tps_data, fps_data], showmedians=False, showextrema=False
+        )
 
-        # set color of distributions
-        parts["bodies"][0].set_facecolor("b")
-        parts["bodies"][0].set_alpha(0.7)
-        parts["bodies"][1].set_facecolor("r")
-        parts["bodies"][1].set_alpha(0.7)
+        # Set color and transparency of distributions
+        colors = ["b", "r"]
+        alphas = [0.7, 0.7]
+        for p, color, alpha in zip(parts["bodies"], colors, alphas):
+            p.set_facecolor(color)
+            p.set_alpha(alpha)
 
         # configure axis
         ax.yaxis.grid(True, linestyle="--", linewidth=0.3)
@@ -193,11 +243,10 @@ def _plot_violin_per_class(tps, fps):
 
     # Hide unused subplots
     for i in range(len(classes), num_rows * num_cols):
-        row = i // num_cols
-        col = i % num_cols
+        row, col = divmod(i, num_cols)
         fig.delaxes(axs[row, col])
 
-    fig.suptitle("Violin Plot of confidences - per Class with IoU@.5", fontsize=16)
+    fig.suptitle("Violin Plot of confidences - per Class @IoU=.50", fontsize=16)
     fig.tight_layout(pad=3.0)
     plt.show()
 
@@ -207,34 +256,40 @@ def _plot_violin_overall(tps, fps):
 
     # Plot & configure violin parts
     parts = ax.violinplot([tps, fps], showmedians=False, showextrema=False)
-    parts["bodies"][0].set_facecolor("b")
-    parts["bodies"][0].set_alpha(0.7)
-    parts["bodies"][1].set_facecolor("r")
-    parts["bodies"][1].set_alpha(0.7)
+    # Set color and transparency of distributions
+    colors = ["b", "r"]
+    alphas = [0.7, 0.7]
+    for p, color, alpha in zip(parts["bodies"], colors, alphas):
+        p.set_facecolor(color)
+        p.set_alpha(alpha)
 
     # configure figure axes
     ax.yaxis.grid(True, linestyle="--", linewidth=0.3)
     ax.set_xticks([1, 2], labels=[f"TP ({len(tps)})", f"FP ({len(fps)})"])
     ax.set_ylabel("confidence")
 
-    fig.suptitle("Violin Plot of confidences - overall with IoU@.5")
+    # Plot the best threshold as a vertical line
+    optimal_threshold, _, _, _, roc_auc = _compute_optimal_threshold(tps, fps)
+    ax.axhline(
+        y=optimal_threshold,
+        color="black",
+        linestyle="--",
+        label=f"Optimal Threshold: {optimal_threshold:.2f} (AUC = {roc_auc:.2f})",
+    )
+    ax.legend(fontsize="small")
+
+    ax.set_title("Violin Plot of confidences - overall @IoU=.50")
     plt.show()
 
 
 def _plot_violin_overall_with_roc(tps, fps):
-    # Combine TP and FP scores and create labels (1 for TP, 0 for FP)
-    scores = np.concatenate([tps, fps])
-    labels = np.concatenate([np.ones_like(tps), np.zeros_like(fps)])
-
-    # Calculate the ROC curve
-    fpr, tpr, thresholds = roc_curve(labels, scores)
-
-    # Calculate the area under the ROC curve (AUC)
-    roc_auc = roc_auc_score(labels, scores)
-
-    # Find the optimal threshold using Youden's J statistic
-    optimal_threshold_index = np.argmax(tpr - fpr)
-    optimal_threshold = thresholds[optimal_threshold_index]
+    (
+        optimal_threshold,
+        optimal_threshold_index,
+        fpr,
+        tpr,
+        roc_auc,
+    ) = _compute_optimal_threshold(tps, fps)
 
     # Create a new figure
     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
@@ -260,26 +315,46 @@ def _plot_violin_overall_with_roc(tps, fps):
 
     # Plot & configure violin parts
     parts = axs[1].violinplot([tps, fps], showmedians=False, showextrema=False)
-    parts["bodies"][0].set_facecolor("b")
-    parts["bodies"][0].set_alpha(0.7)
-    parts["bodies"][1].set_facecolor("r")
-    parts["bodies"][1].set_alpha(0.7)
+    # Set color and transparency of distributions
+    colors = ["b", "r"]
+    alphas = [0.7, 0.7]
+    for p, color, alpha in zip(parts["bodies"], colors, alphas):
+        p.set_facecolor(color)
+        p.set_alpha(alpha)
 
     # configure figure axes
     axs[1].yaxis.grid(True, linestyle="--", linewidth=0.3)
     axs[1].set_xticks([1, 2], labels=[f"TP ({len(tps)})", f"FP ({len(fps)})"])
     axs[1].set_ylabel("confidence")
-    axs[1].set_title("Violin Plot of confidences - overall with IoU@.5")
+    axs[1].set_title("Violin Plot of confidences - overall @IoU=.50")
     # Plot the best threshold as a vertical line
     axs[1].axhline(
         y=optimal_threshold,
         color="black",
         linestyle="--",
-        label=f"Optimal Threshold: {optimal_threshold:.2f}",
+        label=f"Optimal Threshold: {optimal_threshold:.2f} (AUC = {roc_auc:.2f})",
     )
     axs[1].legend(fontsize="small")
 
     plt.show()
+
+
+def _compute_optimal_threshold(tps, fps):
+    # Combine TP and FP scores and create labels (1 for TP, 0 for FP)
+    scores = np.concatenate([tps, fps])
+    labels = np.concatenate([np.ones_like(tps), np.zeros_like(fps)])
+
+    # Calculate the ROC curve
+    fpr, tpr, thresholds = roc_curve(labels, scores)
+
+    # Calculate the area under the ROC curve (AUC)
+    roc_auc = roc_auc_score(labels, scores)
+
+    # Find the optimal threshold using Youden's J statistic
+    optimal_threshold_index = np.argmax(tpr - fpr)
+    optimal_threshold = thresholds[optimal_threshold_index]
+
+    return optimal_threshold, optimal_threshold_index, fpr, tpr, roc_auc
 
 
 def plot_precision_recall_curve(coco_eval, cat_ids: list, iou: float = 0.50):
