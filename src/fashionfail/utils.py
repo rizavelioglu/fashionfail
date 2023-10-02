@@ -111,45 +111,55 @@ def _box_yxyx_to_xyxy(boxes: torch.Tensor) -> torch.Tensor:
     return boxes
 
 
+def _box_xyxy_to_yxyx(boxes: torch.Tensor) -> torch.Tensor:
+    """Convert bounding boxes from (x1, y1, x2, y2) format to (y1, x1, y2, x2) format.
+
+    Args:
+        boxes (torch.Tensor): A tensor of bounding boxes in the (x1, y1, x2, y2) format.
+
+    Returns:
+        torch.Tensor: A tensor of bounding boxes in the (y1, x1, y2, x2) format.
+    """
+    x1, y1, x2, y2 = boxes.unbind(-1)
+    boxes = torch.stack((y1, x1, y2, x2), dim=-1)
+    return boxes
+
+
 # Adapted from: https://github.com/pytorch/vision/blob/main/torchvision/ops/boxes.py#L168
 def extended_box_convert(
     boxes: torch.Tensor, in_fmt: str, out_fmt: str
 ) -> torch.Tensor:
     """
     Converts boxes from given in_fmt to out_fmt.
+
     Supported in_fmt and out_fmt are:
-
-    'xyxy': boxes are represented via corners, x1, y1 being top left and x2, y2 being bottom right.
-    This is the format that torchvision utilities expect.
-
-    'xywh' : boxes are represented via corner, width and height, x1, y2 being top left, w, h being width and height.
-
-    'cxcywh' : boxes are represented via centre, width and height, cx, cy being center of box, w, h
-    being width and height.
-
-    'yxyx': boxes are represented via corners, x1, y1 being top left and x2, y2 being bottom right.
-    This is the format that `amrcnn` model outputs.
+        - 'xyxy': boxes are represented via corners, x1, y1 being top left and x2, y2 being bottom right. This is the format that torchvision utilities expect.
+        - 'xywh' : boxes are represented via corner, width and height, x1, y2 being top left, w, h being width and height.
+        - 'cxcywh' : boxes are represented via centre, width and height, cx, cy being center of box, w, h being width and height.
+        - 'yxyx': boxes are represented via corners, y1, x1 being top left and y2, x2 being bottom right. This is the format that `amrcnn` model outputs.
 
     Args:
         boxes (Tensor[N, 4]): boxes which will be converted.
         in_fmt (str): Input format of given boxes. Supported formats are ['xyxy', 'xywh', 'cxcywh', 'yxyx'].
-        out_fmt (str): Output format of given boxes. Supported formats are ['xyxy', 'xywh', 'cxcywh']
+        out_fmt (str): Output format of given boxes. Supported formats are ['xyxy', 'xywh', 'cxcywh', 'yxyx'].
 
     Returns:
         Tensor[N, 4]: Boxes into converted format.
     """
 
     if in_fmt == "yxyx":
-        # convert to xyxy and change in_fmt xyxy
+        # Convert to xyxy and assign in_fmt accordingly
         boxes = _box_yxyx_to_xyxy(boxes)
         in_fmt = "xyxy"
-        if out_fmt == "xyxy":
-            boxes = boxes
-        elif out_fmt == "xywh":
-            boxes = box_convert(boxes, in_fmt=in_fmt, out_fmt="xywh")
-        elif out_fmt == "cxcywh":
-            boxes = box_convert(boxes, in_fmt=in_fmt, out_fmt="cxcywh")
+
+    if out_fmt == "yxyx":
+        # Convert to xyxy if not already in that format
+        if in_fmt != "xyxy":
+            boxes = box_convert(boxes, in_fmt=in_fmt, out_fmt="xyxy")
+        # Convert to yxyx
+        boxes = _box_xyxy_to_yxyx(boxes)
     else:
+        # Use torchvision's box_convert for other conversions
         boxes = box_convert(boxes, in_fmt=in_fmt, out_fmt=out_fmt)
 
     return boxes
