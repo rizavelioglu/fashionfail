@@ -406,9 +406,9 @@ class COCOeval2:
                         precision[t, :, k, a, m] = np.array(q)
                         scores[t, :, k, a, m] = np.array(ss)
 
-                        num_tp[t, k, a, m] = tp[-1]
-                        num_fp[t, k, a, m] = fp[-1]
-                        num_fn[t, k, a, m] = npig - tp[-1]
+                        num_tp[t, k, a, m] = tp[-1] if tp.size != 0 else 0
+                        num_fp[t, k, a, m] = fp[-1] if fp.size != 0 else 0
+                        num_fn[t, k, a, m] = npig - tp[-1] if tp.size != 0 else npig
 
         self.eval = {
             "params": p,
