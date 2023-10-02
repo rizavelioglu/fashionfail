@@ -46,7 +46,7 @@ def get_cli_args():
         "--eval_method",
         type=str,
         required=True,
-        choices=["COCO", "TorchMetrics", "all"],
+        choices=["COCO", "COCO-extended", "TorchMetrics", "all"],
         help="The name of the evaluation framework to be used, or `all` to run all eval methods.",
     )
     parser.add_argument(
@@ -184,7 +184,7 @@ def get_cocoeval(
     return coco_eval
 
 
-def eval_with_coco(args) -> None:
+def eval_with_coco(args, use_extended_coco: bool = False) -> None:
     # Convert predictions to COCO format
     preds_path = convert_preds_to_coco(
         preds_path=args.preds_path, anns_path=args.anns_path, model_name=args.model_name
@@ -195,10 +195,12 @@ def eval_with_coco(args) -> None:
         annotations_path=args.anns_path,
         predictions_path=preds_path,
         iou_type=args.iou_type,
+        use_coco_eval2=use_extended_coco,
     )
     coco_eval.summarize()
     print_per_class_metrics(coco_eval)
-    print_tp_fp_fn_counts(coco_eval)
+    if use_extended_coco:
+        print_tp_fp_fn_counts(coco_eval)
 
 
 def eval_with_torchmetrics(args) -> None:
@@ -295,10 +297,14 @@ if __name__ == "__main__":
 
     if cli_args.eval_method == "COCO":
         eval_with_coco(cli_args)
+    elif cli_args.eval_method == "COCO-extended":
+        eval_with_coco(cli_args, use_extended_coco=True)
     elif cli_args.eval_method == "TorchMetrics":
         eval_with_torchmetrics(cli_args)
     else:
-        logger.info("=" * 10 + "Evaluating with COCOeval" + "=" * 10)
+        logger.info("=" * 10 + "Evaluating with official COCOeval" + "=" * 10)
         eval_with_coco(cli_args)
+        logger.info("=" * 10 + "Evaluating with extended COCOeval" + "=" * 10)
+        eval_with_coco(cli_args, use_extended_coco=True)
         logger.info("=" * 10 + "Evaluating with TorchMetrics" + "=" * 10)
         eval_with_torchmetrics(cli_args)
