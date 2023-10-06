@@ -42,6 +42,38 @@ def save_annotations(save_path, annotations):
         pickle.dump(annotations, f)
 
 
+def has_anomaly_bbox(bboxes, img_height, img_width, img_name) -> bool:
+    """
+    Check for anomalies in bounding boxes.
+
+    Args:
+        bboxes (np.ndarray): Array of bounding boxes in format (x_min, y_min, x_max, y_max).
+        img_height (int): Height of the image.
+        img_width (int): Width of the image.
+        img_name (str): Name or identifier of the image.
+
+    Returns:
+        bool: True if anomalies are detected, False otherwise.
+    """
+    if bboxes.shape[0] == 0:
+        logger.warning(f"No box detected for image: {img_name}!")
+        return True
+
+    if bboxes.shape[0] > 1:
+        logger.warning(f"Detected {bboxes.shape[0]} boxes for image: {img_name}!")
+        return True
+
+    if np.any(bboxes[:, :2] < 0) or np.any(
+        bboxes[:, 2:] > np.array([img_width, img_height]), axis=1
+    ):
+        logger.warning(
+            f"Invalid bounding box (out of bounds) detected for image: {img_name}!"
+        )
+        return True
+
+    return False
+
+
 def main():
     # Load GroundingDINO
     grounding_dino_model = Model(
@@ -65,17 +97,21 @@ def main():
             box_threshold=BOX_THRESHOLD,
             text_threshold=TEXT_THRESHOLD,
         )
-        # Check anomalies
-        xyxy = detections[0].xyxy
-        if xyxy.shape[0] == 0:
-            logger.warning(f"for image: {image_name}, no box detected!")
-        elif xyxy.shape[0] > 1:
-            logger.warning(f"for image: {image_name}, detected {xyxy.shape[0]} boxes!")
+        # Skip image if there is an anomaly in detected boxes
+        boxes = detections[0].xyxy
+        has_anomaly = has_anomaly_bbox(
+            bboxes=boxes,
+            img_height=image.shape[0],
+            img_width=image.shape[1],
+            img_name=image_name,
+        )
+        if has_anomaly:
+            continue
 
         # Run SAM with detected box
         sam_predictor.set_image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         result_masks = []
-        for box in xyxy:
+        for box in boxes:
             masks, scores, logits = sam_predictor.predict(
                 box=box, multimask_output=True
             )
