@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -76,8 +76,8 @@ def load_tpu_preds(path_to_preds: str, preprocess: bool = True) -> pd.DataFrame:
 
 
 def _filter_preds_for_classes(
-    row: pd.Series, class_ids: list[int]
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[dict[str, Any]]]:
+    row: pd.Series, class_ids: List[int]
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, List[Dict[str, Any]]]:
     """
     Filter prediction attributes based on class IDs.
 
@@ -161,7 +161,7 @@ def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> s
         )
         return output_json_file
 
-    # Load predictions
+    # Load predictions belonging to classes of interest
     df_preds = load_tpu_preds(preds_path, preprocess=False)
     # Remove samples with no predictions, otherwise following processing fails
     df_preds = df_preds[df_preds["boxes"].apply(lambda box: box.size != 0)]
