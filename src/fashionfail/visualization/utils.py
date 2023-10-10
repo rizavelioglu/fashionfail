@@ -2,10 +2,28 @@ from itertools import cycle
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from sklearn.metrics import PrecisionRecallDisplay, roc_auc_score, roc_curve
 
 from fashionfail.models.prediction_utils import load_tpu_preds
 from fashionfail.utils import load_categories
+
+
+def _prepare_data_for_hist(preds_path: str) -> pd.DataFrame:
+    # Load and preprocess predictions
+    df_preds = load_tpu_preds(preds_path, preprocess=True)
+
+    # Select relevant columns and remove samples with no predictions
+    df_preds = df_preds[["image_file", "boxes", "scores", "classes"]]
+    df_preds = df_preds[df_preds["boxes"].apply(lambda box: box.size != 0)]
+
+    # Explode predictions for each sample and adjust class IDs
+    df_exploded = df_preds.explode(["classes", "scores", "boxes"])
+    df_exploded["classes"] -= 1
+
+    # Convert columns to appropriate data types
+    df_exploded = df_exploded.astype({"classes": "int32", "scores": "float64"})
+    return df_exploded
 
 
 def plot_confidence_hist(preds_path: str, class_wise: bool = False):
@@ -24,19 +42,7 @@ def plot_confidence_hist(preds_path: str, class_wise: bool = False):
         >>> plot_confidence_hist("/path/to/predictions.npy", class_wise=True)
 
     """
-    # Load and preprocess predictions
-    df_preds = load_tpu_preds(preds_path, preprocess=True)
-
-    # Select relevant columns and remove samples with no predictions
-    df_preds = df_preds[["image_file", "boxes", "scores", "classes"]]
-    df_preds = df_preds[df_preds["boxes"].apply(lambda box: box.size != 0)]
-
-    # Explode predictions for each sample and adjust class IDs
-    df_exploded = df_preds.explode(["classes", "scores", "boxes"])
-    df_exploded["classes"] -= 1
-
-    # Convert columns to appropriate data types
-    df_exploded = df_exploded.astype({"classes": "int32", "scores": "float64"})
+    df_exploded = _prepare_data_for_hist(preds_path)
 
     # Define the number of bins for the histograms
     num_bins = 20
@@ -109,17 +115,56 @@ def _plot_hist_overall(df_exploded, num_bins):
     # the histogram of the data
     n, bins, patches = ax.hist(df_exploded.scores.values, num_bins, density=False)
 
-    ax.set_xlabel("Scores (Softmax probabilities)")
+    ax.set_xlabel("Confidence scores")
     ax.set_ylabel("Count")
-    ax.set_title("Histogram of confidence scores - overall")
+    ax.set_title("Histogram of confidences - overall")
 
     # Tweak spacing to prevent clipping of ylabel
     fig.tight_layout()
     plt.show()
 
 
-def plot_confidence_hist_combined():
-    pass
+def plot_confidence_hist_combined(
+    preds_path1: str, preds_path2: str, dataset1_name: str, dataset2_name: str
+):
+    """
+    Create a stacked normalized histogram plot from two prediction files.
+
+    Args:
+        preds_path1 (str): Path to the predictions file.
+        preds_path2 (str): Path to the predictions file.
+        dataset1_name (str): The name of the dataset `preds_path1` belongs to.
+        dataset2_name (str): The name of the dataset `preds_path2` belongs to.
+
+    Returns:
+        None
+
+    """
+    df1 = _prepare_data_for_hist(preds_path1)
+    df2 = _prepare_data_for_hist(preds_path2)
+
+    num_bins = 50
+    fig, ax = plt.subplots()
+
+    # Create stacked histograms
+    n1, bins, _ = ax.hist(
+        (df1.scores, df2.scores),
+        num_bins,
+        alpha=0.9,
+        density=True,
+        stacked=True,
+        label=[dataset1_name, dataset2_name],
+    )
+
+    ax.set_xlabel("Confidence scores")
+    ax.set_ylabel("Prob.Density")
+    ax.set_title("Histogram of confidences - overall")
+
+    ax.legend()  # Add a legend
+
+    # Tweak spacing to prevent clipping of ylabel
+    fig.tight_layout()
+    plt.show()
 
 
 def plot_confidence_violin_combined(
@@ -155,7 +200,7 @@ def plot_confidence_violin_combined(
         ax=ax,
         inner="quartile",
         split=True,
-        scale="count",
+        scale="area",
     )
 
     # configure figure axes
