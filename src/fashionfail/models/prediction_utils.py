@@ -162,7 +162,7 @@ def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> s
         return output_json_file
 
     # Load predictions belonging to classes of interest
-    df_preds = load_tpu_preds(preds_path, preprocess=False)
+    df_preds = load_tpu_preds(preds_path, preprocess=True)
     # Remove samples with no predictions, otherwise following processing fails
     df_preds = df_preds[df_preds["boxes"].apply(lambda box: box.size != 0)]
 
@@ -171,7 +171,12 @@ def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> s
 
     # Rename and reorder columns
     df_exploded = df_exploded.rename(
-        columns={"classes": "class", "boxes": "bbox", "scores": "score"}
+        columns={
+            "classes": "class",
+            "boxes": "bbox",
+            "scores": "score",
+            "masks": "mask",
+        }
     )
 
     # Apply the extended_box_convert function to each box in the "bbox" column
@@ -182,6 +187,11 @@ def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> s
         lambda bbox: extended_box_convert(
             torch.tensor(bbox), in_fmt=in_fmt, out_fmt=out_fmt
         ).numpy()
+    )
+
+    # Process masks: convert 'counts' from binary to utf-8
+    df_exploded["mask"] = df_exploded["mask"].apply(
+        lambda x: {"size": x["size"], "counts": x["counts"].decode("utf-8")}
     )
 
     # Sort predictions by score
@@ -219,6 +229,7 @@ def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> s
                 # Round coordinates to the nearest tenth of a pixel
                 "bbox": [round(float(coord), 1) for coord in row["bbox"]],
                 "score": float(row["score"]),
+                "segmentation": row["mask"],
             }
         )
 
