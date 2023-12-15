@@ -8,6 +8,20 @@ from sklearn.metrics import PrecisionRecallDisplay, roc_auc_score, roc_curve
 from fashionfail.models.prediction_utils import load_tpu_preds
 from fashionfail.utils import load_categories
 
+SMALL_SIZE = 8
+MEDIUM_SIZE = 12
+BIG_SIZE = 18
+BIGGER_SIZE = 22
+
+# plt.rcParams.update(plt.rcParamsDefault)
+plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
+plt.rc("axes", titlesize=BIG_SIZE)  # fontsize of the axes title
+plt.rc("axes", labelsize=BIG_SIZE)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=BIG_SIZE)  # fontsize of the tick labels
+plt.rc("ytick", labelsize=BIG_SIZE)  # fontsize of the tick labels
+plt.rc("legend", fontsize=MEDIUM_SIZE)  # legend fontsize
+plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
 
 def _prepare_data_for_hist(preds_path: str) -> pd.DataFrame:
     # Load and preprocess predictions
@@ -167,48 +181,155 @@ def plot_confidence_hist_combined(
     plt.show()
 
 
-def plot_confidence_violin_combined(
-    tps1, fps1, tps2, fps2, dataset1_name, dataset2_name
-):
+def plot_hist_violin_combined(*datasets, out_path: str):
     import seaborn as sns
 
-    fig, ax = plt.subplots(nrows=1, ncols=1)
+    model_names = ["amrcnn", "fformer", "fp-mrcnn", "fp-mrcnn+"]
+    num_bins = 50
+    num_datasets = len(datasets)
+    fig, axs = plt.subplots(num_datasets, 2, figsize=(8, 14), sharey="row")
 
-    # Create data and labels for the two datasets
-    data = {
-        "Data": np.concatenate([tps1, fps1, tps2, fps2]),
-        "Dataset": (
-            [dataset1_name] * len(tps1)
-            + [dataset1_name] * len(fps1)
-            + [dataset2_name] * len(tps2)
-            + [dataset2_name] * len(fps2)
-        ),
-        "Type": (
-            ["TP"] * len(tps1)
-            + ["FP"] * len(fps1)
-            + ["TP"] * len(tps2)
-            + ["FP"] * len(fps2)
-        ),
-    }
+    for i, (data, model_name) in enumerate(zip(datasets, model_names)):
+        (
+            preds_path1,
+            preds_path2,
+            dataset1_name,
+            dataset2_name,
+            tps1,
+            fps1,
+            tps2,
+            fps2,
+        ) = data
 
-    # Create a violin plot using Seaborn with split
-    sns.violinplot(
-        data=data,
-        x="Type",
-        y="Data",
-        hue="Dataset",
-        ax=ax,
-        inner="quartile",
-        split=True,
-        scale="area",
-    )
+        # Plot histogram
+        df1 = _prepare_data_for_hist(preds_path1)
+        df2 = _prepare_data_for_hist(preds_path2)
 
-    # configure figure axes
-    ax.yaxis.grid(True, linestyle="--", linewidth=0.3)
-    ax.set_ylabel("confidence")
-    ax.set_title("Combined Violin Plot of confidences - overall @IoU=.50")
+        # Create stacked histograms with switched coordinates
+        axs[i, 0].hist(
+            (df1.scores, df2.scores),
+            num_bins,
+            alpha=0.9,
+            density=True,
+            stacked=True,
+            label=[dataset1_name, dataset2_name],
+            orientation="horizontal",  # Switch coordinates here
+        )
 
-    plt.show()
+        axs[i, 0].yaxis.grid(True, linestyle="--", linewidth=0.3)
+        axs[i, 0].set_ylabel("confidence scores")
+        axs[i, 0].set_xlabel("probability density")
+
+        axs[i, 0].legend(loc="upper right")  # Add a legend
+
+        # Plot violin plot
+        data = {
+            "Data": np.concatenate([tps1, fps1, tps2, fps2]),
+            "Dataset": (
+                [dataset1_name] * len(tps1)
+                + [dataset1_name] * len(fps1)
+                + [dataset2_name] * len(tps2)
+                + [dataset2_name] * len(fps2)
+            ),
+            "Type": (
+                ["TP"] * len(tps1)
+                + ["FP"] * len(fps1)
+                + ["TP"] * len(tps2)
+                + ["FP"] * len(fps2)
+            ),
+        }
+
+        sns.violinplot(
+            data=data,
+            x="Type",
+            y="Data",
+            hue="Dataset",
+            ax=axs[i, 1],
+            inner="quartile",
+            split=True,
+            scale="area",
+            cut=0.5,
+        )
+        # configure figure axes
+        axs[i, 1].yaxis.grid(True, linestyle="--", linewidth=0.3)
+        axs[i, 1].set_ylabel(f"{model_name}", rotation=90, labelpad=-250.0)
+        axs[i, 1].get_legend().set_visible(False)  # hide legend
+
+    # Set column titles
+    axs[0, 0].set_title("Histogram of confidences - overall")
+    axs[0, 1].set_title("Violin Plot of confidences - overall @IoU=.50")
+
+    fig.tight_layout()
+    if out_path:
+        plt.savefig(f"{out_path}", dpi=300)
+    plt.close(fig)
+    return fig
+
+
+def plot_confidence_violins(*datasets, out_path: str):
+    import seaborn as sns
+
+    model_names = ["amrcnn", "fformer", "fp-mrcnn", "fp-mrcnn+"]
+    num_datasets = len(datasets)
+    fig, axs = plt.subplots(nrows=1, ncols=num_datasets, figsize=(24, 6), sharey="row")
+
+    for i, (data, model_name) in enumerate(zip(datasets, model_names)):
+        _, _, dataset1_name, dataset2_name, tps1, fps1, tps2, fps2 = data
+
+        # Plot violin plot
+        data = {
+            "Data": np.concatenate([tps1, fps1, tps2, fps2]),
+            "Dataset": (
+                [dataset1_name] * len(tps1)
+                + [dataset1_name] * len(fps1)
+                + [dataset2_name] * len(tps2)
+                + [dataset2_name] * len(fps2)
+            ),
+            "Type": (
+                ["TP"] * len(tps1)
+                + ["FP"] * len(fps1)
+                + ["TP"] * len(tps2)
+                + ["FP"] * len(fps2)
+            ),
+        }
+
+        sns.violinplot(
+            data=data,
+            x="Type",
+            y="Data",
+            hue="Dataset",
+            ax=axs[i],
+            inner="quartile",
+            split=True,
+            scale="area",
+            cut=0.5,
+        )
+
+        for idx, (tps, fps) in enumerate([(tps1, fps1), (tps2, fps2)]):
+            # Plot optimal threshold calculated using ROC-AUC
+            optimal_threshold, _, _, _, roc_auc = _compute_optimal_threshold(tps, fps)
+
+            axs[i].axhline(
+                y=optimal_threshold,
+                color="blue" if idx == 0 else "orange",
+                linestyle="--",
+                label=f"$t=${optimal_threshold:.2f} (AUROC = {roc_auc:.2f})",
+            )
+
+        # configure figure axes
+        axs[i].yaxis.grid(True, linestyle="--", linewidth=0.3)
+        axs[i].set_title(f"{model_name}")
+        axs[i].legend(loc="upper right")  # add legend
+
+    # Configure figure
+    axs[0].set_ylabel("softmax probabilities")
+    plt.suptitle("Violin Plot of confidences - overall @IoU=.50")
+    fig.tight_layout()
+    # Save figure if path provided
+    if out_path:
+        plt.savefig(f"{out_path}", dpi=300)
+    plt.close(fig)
+    return fig
 
 
 def plot_confidence_violin(

@@ -54,6 +54,7 @@ def compute_calibration(true_labels, pred_labels, confidences, num_bins=10):
     gaps = np.abs(bin_accuracies - bin_confidences)
     ece = np.sum(gaps * bin_counts) / np.sum(bin_counts)
     mce = np.max(gaps)
+    ace = np.sum(gaps) / num_bins
 
     return {
         "accuracies": bin_accuracies,
@@ -64,6 +65,7 @@ def compute_calibration(true_labels, pred_labels, confidences, num_bins=10):
         "avg_confidence": avg_conf,
         "expected_calibration_error": ece,
         "max_calibration_error": mce,
+        "average_calibration_error": ace,
     }
 
 
@@ -71,6 +73,7 @@ def _reliability_diagram_subplot(
     ax,
     bin_data,
     draw_ece=True,
+    draw_ace=True,
     draw_bin_importance=False,
     title="Reliability Diagram",
     xlabel="Confidence",
@@ -132,8 +135,19 @@ def _reliability_diagram_subplot(
         ece = bin_data["expected_calibration_error"] * 100
         ax.text(
             0.98,
-            0.02,
+            0.06,
             "ECE=%.2f" % ece,
+            color="black",
+            ha="right",
+            va="bottom",
+            transform=ax.transAxes,
+        )
+    if draw_ace:
+        ace = bin_data["average_calibration_error"] * 100
+        ax.text(
+            0.98,
+            0.02,
+            "ACE=%.2f" % ace,
             color="black",
             ha="right",
             va="bottom",
@@ -190,6 +204,7 @@ def _confidence_histogram_subplot(
 def _reliability_diagram_combined(
     bin_data,
     draw_ece,
+    draw_ace,
     draw_bin_importance,
     draw_averages,
     title,
@@ -214,7 +229,7 @@ def _reliability_diagram_combined(
     plt.subplots_adjust(hspace=-0.1)
 
     _reliability_diagram_subplot(
-        ax[0], bin_data, draw_ece, draw_bin_importance, title=title, xlabel=""
+        ax[0], bin_data, draw_ece, draw_ace, draw_bin_importance, title=title, xlabel=""
     )
 
     # Draw the confidence histogram upside down.
@@ -239,6 +254,7 @@ def reliability_diagram(
     confidences,
     num_bins=10,
     draw_ece=True,
+    draw_ace=True,
     draw_bin_importance=False,
     draw_averages=True,
     title="Reliability Diagram",
@@ -277,6 +293,7 @@ def reliability_diagram(
         confidences: the predicted confidences for the test examples
         num_bins: number of bins
         draw_ece: whether to include the Expected Calibration Error
+        draw_ace: whether to include the Average Calibration Error
         draw_bin_importance: whether to represent how much each bin contributes
             to the total accuracy: False, "alpha", "widths"
         draw_averages: whether to draw the overall accuracy and confidence in
@@ -290,6 +307,7 @@ def reliability_diagram(
     return _reliability_diagram_combined(
         bin_data,
         draw_ece,
+        draw_ace,
         draw_bin_importance,
         draw_averages,
         title,
