@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ import torch
 from loguru import logger
 from pycocotools.coco import COCO
 
-from fashionfail.utils import extended_box_convert, load_categories
+from fashionfail.utils import extended_box_convert
 
 bbox_conversion_formats = {"amrcnn": ("yxyx", "xywh"), "fformer": ("xyxy", "xywh")}
 """
@@ -40,22 +40,16 @@ else:
 """
 
 
-def load_tpu_preds(path_to_preds: str, preprocess: bool = True) -> pd.DataFrame:
+def load_tpu_preds(
+    path_to_preds: str, filter_cat_ids: Optional[list[int]] = None
+) -> pd.DataFrame:
     """
-    Load predictions from a file and optionally apply preprocessing.
-
-    Predictions must have the following attributes:
-    {
-        "image_file": full name of the image,
-        "boxes": list of bounding box coordinates,
-        "classes": list of class id's,
-        "scores": list of floats,
-        "masks": list of binary values,
-    }
+    Load predictions from a file, apply preprocessing, and optionally filter predictions based on category IDs.
 
     Args:
         path_to_preds (str): Path to the predictions file.
-        preprocess (bool, optional): Whether to apply basic preprocessing. Defaults to True.
+        filter_cat_ids (list[int], optional): If specified, only keeps predictions for these category IDs and filters
+        out others. Defaults to None.
 
     Returns:
         pd.DataFrame: DataFrame containing the loaded predictions.
@@ -68,9 +62,8 @@ def load_tpu_preds(path_to_preds: str, preprocess: bool = True) -> pd.DataFrame:
         df_preds = pd.DataFrame.from_records(preds)
     logger.info(f"Predictions loaded from: {path_to_preds}")
 
-    # Apply basic preprocessing on request
-    if preprocess:
-        df_preds = clean_df_preds(df_preds)
+    # Apply basic preprocessing & filter for catIds if specified
+    df_preds = clean_df_preds(df_preds, filter_cat_ids=filter_cat_ids)
 
     return df_preds
 
@@ -109,7 +102,9 @@ def _filter_preds_for_classes(
     return filtered_classes, filtered_scores, filtered_boxes, filtered_masks
 
 
-def clean_df_preds(df_preds: pd.DataFrame) -> pd.DataFrame:
+def clean_df_preds(
+    df_preds: pd.DataFrame, filter_cat_ids: Optional[list[int]] = None
+) -> pd.DataFrame:
     logger.info("Processing predictions dataframe...")
     # Preprocess dataframe
     df_preds = df_preds[["image_file", "classes", "scores", "boxes", "masks"]]
@@ -132,25 +127,39 @@ def clean_df_preds(df_preds: pd.DataFrame) -> pd.DataFrame:
     )
 
     # Apply the filtering function to the dataframe and update the predictions
-    class_ids = list(load_categories().keys())
-    df_preds["classes"], df_preds["scores"], df_preds["boxes"], df_preds["masks"] = zip(
-        *df_preds.apply(_filter_preds_for_classes, axis=1, class_ids=class_ids)
-    )
+    if filter_cat_ids:
+        (
+            df_preds["classes"],
+            df_preds["scores"],
+            df_preds["boxes"],
+            df_preds["masks"],
+        ) = zip(
+            *df_preds.apply(_filter_preds_for_classes, axis=1, class_ids=filter_cat_ids)
+        )
+        # Logging
+        logger.info(
+            f"Filtered out predictions made for categoryID >= {len(filter_cat_ids)}..."
+        )
+        nb_of_samples_w_no_preds_after_filter = (
+            df_preds[df_preds["classes"].apply(lambda x: x.size == 0)].shape[0]
+            - nb_of_samples_w_no_preds
+        )
+        logger.debug(
+            f"Number of samples with no predictions after filtering categories: {nb_of_samples_w_no_preds_after_filter}."
+        )
 
-    # Logging
-    logger.info(f"Filtered out predictions made for categoryID >= {len(class_ids)}...")
-    nb_of_samples_w_no_preds_after_filter = (
-        df_preds[df_preds["classes"].apply(lambda x: x.size == 0)].shape[0]
-        - nb_of_samples_w_no_preds
-    )
-    logger.debug(
-        f"Number of samples with no predictions after filtering categories: {nb_of_samples_w_no_preds_after_filter}."
-    )
+    # Remove samples with no predictions, otherwise calculations fail
+    df_preds = df_preds[df_preds["boxes"].apply(lambda box: box.size != 0)]
 
     return df_preds
 
 
-def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> str:
+def convert_preds_to_coco(
+    preds_path: str,
+    anns_path: str,
+    model_name: str,
+    filter_cat_ids: Optional[list[int]] = None,
+) -> str:
     logger.info("Converting raw predictions to COCO format...")
     # The path to the resulting .json file
     output_json_file = preds_path.replace(Path(preds_path).suffix, "-coco.json")
@@ -162,9 +171,7 @@ def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> s
         return output_json_file
 
     # Load predictions belonging to classes of interest
-    df_preds = load_tpu_preds(preds_path, preprocess=True)
-    # Remove samples with no predictions, otherwise following processing fails
-    df_preds = df_preds[df_preds["boxes"].apply(lambda box: box.size != 0)]
+    df_preds = load_tpu_preds(preds_path, filter_cat_ids=filter_cat_ids)
 
     # Explode predictions for each sample
     df_exploded = df_preds.explode(["classes", "scores", "boxes", "masks"])
@@ -205,19 +212,8 @@ def convert_preds_to_coco(preds_path: str, anns_path: str, model_name: str) -> s
     # Convert the DataFrame to a list of dictionaries in the desired format
     json_data = []
     for _, row in df_exploded.iterrows():
-        try:
-            image_id = coco_imgs[
-                coco_imgs.file_name == row["image_file"].split("/")[1]
-            ].id.values[0]
-        except IndexError:
-            try:
-                image_id = coco_imgs[
-                    coco_imgs.file_name == row["image_file"]
-                ].id.values[0]
-            except Exception as e:
-                # Handle the exception here, e.g., log an error message or take appropriate action
-                print(f"An error occurred: {str(e)}")
-                break
+        # retrieve COCO imgId
+        image_id = coco_imgs[coco_imgs.file_name == row["image_file"]].id.values[0]
 
         json_data.append(
             {
