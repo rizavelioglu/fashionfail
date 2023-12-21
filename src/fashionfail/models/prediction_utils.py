@@ -138,7 +138,7 @@ def clean_df_preds(
         )
         # Logging
         logger.info(
-            f"Filtered out predictions made for categoryID >= {len(filter_cat_ids)}..."
+            f"Filtered out predictions made for categoryID's = {filter_cat_ids}..."
         )
         nb_of_samples_w_no_preds_after_filter = (
             df_preds[df_preds["classes"].apply(lambda x: x.size == 0)].shape[0]
