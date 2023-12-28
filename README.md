@@ -51,6 +51,7 @@ Here's the full pipeline of creating FashionFail Dataset:
    python label_gt.py \
        --images_dir="/home/rizavelioglu/work/data/fashionfail/data-v2/images/" \
        --anns_dir="/home/rizavelioglu/work/data/fashionfail/data-v2/annotations/" \
+       --label_anns_file="/home/rizavelioglu/work/data/fashionfail/data-v2/df_labels.csv" \
        --out_path="/home/rizavelioglu/work/data/fashionfail/data-v2/labeled_images_GT.json"
    ```
    </details>
@@ -96,4 +97,13 @@ python inference_fashion.py \
     --image_size="640" \
     --image_file_pattern="/home/rizavelioglu/work/data/fashionpedia/fashionpedia-val.tar" \
     --output_file="outputs/output-fashionpedia-val.npy"
+```
+
+9. Convert the dataset to COCO format:
+```bash
+python fashionfail/data/convert_ff_to_coco.py \
+    --images_dir="/home/rizavelioglu/work/data/fashionfail/data-v2/images/" \
+    --anns_dir="/home/rizavelioglu/work/data/fashionfail/data-v2/annotations/" \
+    --label_anns_file="/home/rizavelioglu/work/data/fashionfail/data-v2/df_labels.csv" \
+    --out_path="/home/rizavelioglu/work/data/fashionfail/data-v2/fashionfail-v2_coco.json"
 ```

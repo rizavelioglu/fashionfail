@@ -11,10 +11,15 @@ requires = ["setuptools>=61.0"]
 name = "fashionfail"
 version = "0.1.0"
 description = "Official Repository of FashionFail paper"
-readme = "README.md"
 requires-python = ">=3.8"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+keywords = ["dataset", "ecommerce", "clothing parsing", "object detection", "instance segmentation"]
 authors = [
-  {email = "rvelioglu@techfak.uni-bielefeld.de", name = "Riza Velioglu"}
+  {name = "Riza Velioglu", email = "rvelioglu@techfak.uni-bielefeld.de"}
+]
+maintainers = [
+  {name = "Riza Velioglu", email = "rvelioglu@techfak.uni-bielefeld.de"}
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -45,6 +50,7 @@ dev = [
 ]
 
 [project.urls]
+Homepage = ""
+Repository = "https://github.com/rizavelioglu/fashionfail.git"
+Issues = "https://github.com/rizavelioglu/fashionfail/issues"
 "Bug Tracker" = "https://github.com/rizavelioglu/fashionfail/issues"
-"Homepage" = "https://github.com/rizavelioglu/fashionfail"
-"Source" = "https://github.com/rizavelioglu/fashionfail"
