@@ -53,7 +53,7 @@ def get_cli_args():
         "--model_name",
         type=str,
         required=True,
-        choices=["amrcnn", "fformer"],
+        choices=["amrcnn", "fformer", "facere_plus"],
         help="The name of the model, either 'amrcnn' or 'fformer'.",
     )
 
@@ -68,17 +68,17 @@ def print_per_class_metrics(coco_eval: COCOeval) -> None:
 
     m_aps = []
     for c in cat_ids:
+        # [TxRxKxAxM]: A=0: area="all" & M=2: maxDets=100
         pr = coco_eval.eval["precision"][:, :, c, 0, 2]
-        if not np.isnan(pr).all():
-            m_ap = np.nanmean(pr)  # Use np.nanmean to handle NaN values
+        if len(pr[pr > -1]) == 0:
+            m_ap = -1
         else:
-            m_ap = 0.0  # Set a default value if there are no positive detections
+            m_ap = np.mean(pr[pr > -1])
         m_aps.append(m_ap)
 
     cats = pd.DataFrame({"name": cat_names, "AP": m_aps})
-    cats["name"] = cats["name"].str.slice(
-        0, 15
-    )  # Limit the number of characters to 15 for better readability
+    # Limit the number of characters to 15 for better readability
+    cats["name"] = cats["name"].str.slice(0, 15)
     display(cats)
 
 
@@ -208,7 +208,7 @@ def eval_with_torchmetrics(args) -> None:
     coco = COCO(args.anns_path)
 
     # Load predictions
-    df_preds = load_tpu_preds(args.preds_path, preprocess=True)
+    df_preds = load_tpu_preds(args.preds_path)
 
     # Initialize metric
     metric = MeanAveragePrecision(
