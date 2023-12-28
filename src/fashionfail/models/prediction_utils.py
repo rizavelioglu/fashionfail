@@ -10,7 +10,11 @@ from pycocotools.coco import COCO
 
 from fashionfail.utils import extended_box_convert
 
-bbox_conversion_formats = {"amrcnn": ("yxyx", "xywh"), "fformer": ("xyxy", "xywh")}
+bbox_conversion_formats = {
+    "amrcnn": ("yxyx", "xywh"),
+    "fformer": ("xyxy", "xywh"),
+    "facere_plus": ("yxyx", "xywh"),
+}
 """
 A dictionary that maps model names to bounding box (bbox) conversion formats.
 
@@ -154,6 +158,23 @@ def clean_df_preds(
     return df_preds
 
 
+def _fix_class_ids(series):
+    # Define the excluded indices
+    excluded_indices = {2, 12, 16, 19, 20}
+    # Create a DataFrame for the remaining categories
+    remaining_categories = list(set(range(27)) - excluded_indices)
+    df_mapping = pd.DataFrame(
+        {
+            "old_cat_id": remaining_categories,
+            "new_cat_id": range(len(remaining_categories)),
+        }
+    )
+    # Create a dictionary that maps new IDs to old(original) IDs
+    new_id_to_org_id = dict(zip(df_mapping["new_cat_id"], df_mapping["old_cat_id"]))
+
+    return series.apply(lambda i: new_id_to_org_id.get(i - 1))
+
+
 def convert_preds_to_coco(
     preds_path: str,
     anns_path: str,
@@ -185,6 +206,10 @@ def convert_preds_to_coco(
             "masks": "mask",
         }
     )
+
+    # re-map class id's to original ones
+    if model_name == "facere_plus":
+        df_exploded["class"] = _fix_class_ids(df_exploded["class"])
 
     # Apply the extended_box_convert function to each box in the "bbox" column
     in_fmt, out_fmt = bbox_conversion_formats.get(model_name, (None, None))
