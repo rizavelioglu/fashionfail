@@ -60,7 +60,7 @@ def get_cli_args():
     return parser.parse_args()
 
 
-def print_per_class_metrics(coco_eval: COCOeval) -> None:
+def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False):
     # Display per class metrics
     categories = load_categories()
     cat_ids = coco_eval.params.catIds
@@ -80,6 +80,8 @@ def print_per_class_metrics(coco_eval: COCOeval) -> None:
     # Limit the number of characters to 15 for better readability
     cats["name"] = cats["name"].str.slice(0, 15)
     display(cats)
+    if return_results:
+        return cats
 
 
 def print_tp_fp_fn_counts(coco_eval, iou_idx=0, area_idx=0, max_dets_idx=2):

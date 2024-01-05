@@ -25,7 +25,7 @@ plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def _prepare_data_for_hist(preds_path: str) -> pd.DataFrame:
     # Load and preprocess predictions
-    df_preds = load_tpu_preds(preds_path, preprocess=True)
+    df_preds = load_tpu_preds(preds_path)
 
     # Select relevant columns and remove samples with no predictions
     df_preds = df_preds[["image_file", "boxes", "scores", "classes"]]
@@ -269,12 +269,12 @@ def plot_hist_violin_combined(*datasets, out_path: str):
 def plot_confidence_violins(*datasets, out_path: str):
     import seaborn as sns
 
-    model_names = ["amrcnn", "fformer", "fp-mrcnn", "fp-mrcnn+"]
+    model_names = ["A-MRCNN", "Fashionformer", "Facere", "Facere+"]
     num_datasets = len(datasets)
     fig, axs = plt.subplots(nrows=1, ncols=num_datasets, figsize=(24, 6), sharey="row")
 
     for i, (data, model_name) in enumerate(zip(datasets, model_names)):
-        _, _, dataset1_name, dataset2_name, tps1, fps1, tps2, fps2 = data
+        dataset1_name, dataset2_name, tps1, fps1, tps2, fps2 = data
 
         # Plot violin plot
         data = {
@@ -301,7 +301,7 @@ def plot_confidence_violins(*datasets, out_path: str):
             ax=axs[i],
             inner="quartile",
             split=True,
-            scale="area",
+            scale="count",
             cut=0.5,
         )
 
