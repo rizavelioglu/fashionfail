@@ -79,8 +79,10 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False):
     cats = pd.DataFrame({"name": cat_names, "AP": m_aps})
     # Limit the number of characters to 15 for better readability
     cats["name"] = cats["name"].str.slice(0, 15)
-    display(cats)
-    if return_results:
+
+    if not return_results:
+        display(cats)
+    else:
         return cats
 
 
