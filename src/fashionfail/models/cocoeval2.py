@@ -83,8 +83,8 @@ class COCOeval2:
         Run per image evaluation on given images and store results (a list of dict) in self.evalImgs
         :return: None
         """
-        tic = time.time()
-        print("Running per image evaluation...")
+        time.time()
+        # print("Running per image evaluation...")
         p = self.params
         # add backward compatibility if useSegm is specified in params
         if not p.useSegm is None:
@@ -120,8 +120,8 @@ class COCOeval2:
             for imgId in p.imgIds
         ]
         self._paramsEval = copy.deepcopy(self.params)
-        toc = time.time()
-        print(f"DONE (t={toc - tic:0.2f}s).")
+        time.time()
+        # print(f"DONE (t={toc - tic:0.2f}s).")
 
     def computeIoU(self, imgId, catId):
         p = self.params
@@ -292,8 +292,8 @@ class COCOeval2:
         :param p: input params for evaluation
         :return: None
         """
-        print("Accumulating evaluation results...")
-        tic = time.time()
+        # print("Accumulating evaluation results...")
+        time.time()
         if not self.evalImgs:
             print("Please run evaluate() first")
         # allows input customized parameters
@@ -423,8 +423,8 @@ class COCOeval2:
             "scores_tp": scores_tp,
             "scores_fp": scores_fp,
         }
-        toc = time.time()
-        print(f"DONE (t={toc - tic:0.2f}s).")
+        time.time()
+        # print(f"DONE (t={toc - tic:0.2f}s).")
 
     def summarize(self):
         """
