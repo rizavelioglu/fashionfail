@@ -39,6 +39,12 @@ def download_image(session, url, img_params, save_dir, filename):
         print(f"Could not download: {url}")
 
 
+def download_image_wrapper(params):
+    session, url, img_params, save_dir, filename, pbar = params
+    download_image(session, url, img_params, save_dir, filename)
+    pbar.update(1)
+
+
 def determine_source(url):
     # Split the URL by the forward slash (/)
     components = url.split("/")
@@ -58,12 +64,12 @@ def get_img_params_for_source(source):
 
 
 def download_images(cli_args):
+    # Create the directory if it doesn't exist
     save_dir = Path(cli_args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(
-        cli_args.csv_path, usecols=["images", "image_name"]
-    )  # Read the DataFrame from a CSV file
+    # Read the DataFrame from a CSV file, extracting relevant columns
+    df = pd.read_csv(cli_args.csv_path, usecols=["images", "image_name"])
     img_urls = df["images"].tolist()  # Extract the "images" column as a list
     image_names = df["image_name"].tolist()  # Extract the "image_name" column as a list
 
@@ -75,20 +81,33 @@ def download_images(cli_args):
         if name not in already_downloaded_names
     ]
 
+    # Initialize tqdm progress bar with the total number of remaining URLs
     with tqdm(total=len(remaining_urls)) as pbar, requests.Session() as session:
+        # Use ThreadPoolExecutor for concurrent image downloads
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=cli_args.max_workers
         ) as executor:
-            for url, filename in zip(remaining_urls, image_names):
-                source = determine_source(url)  # Determine the appropriate image source
-                img_params = get_img_params_for_source(
-                    source
-                )  # Get the corresponding img_params
-                executor.submit(
-                    download_image, session, url, img_params, save_dir, filename
-                )
-                pbar.update(1)
+            # List to store futures for monitoring completion
+            futures = []
 
+            # Iterate over remaining URLs and image names
+            for url, filename in zip(remaining_urls, image_names):
+                # Determine the appropriate image source
+                source = determine_source(url)
+
+                # Get the corresponding img_params
+                img_params = get_img_params_for_source(source)
+
+                # Pack parameters for download_image_wrapper
+                params = (session, url, img_params, save_dir, filename, pbar)
+
+                # Submit the download task to the executor
+                futures.append(executor.submit(download_image_wrapper, params))
+
+            # Wait for all futures to complete
+            concurrent.futures.wait(futures)
+
+    # Display a completion message
     print("Download completed!")
 
 
