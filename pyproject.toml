@@ -25,15 +25,9 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Development Status :: 3 - Alpha",
 ]
-dependencies = []
 
-
-[project.optional-dependencies]
-dev = [
-  "pip-tools>=6.12.2",
+dependencies = [
   "pre-commit>=3.3.2",
-  "pytest-cov>=4.0.0",
-  "pytest>=7.2.0",
   "numpy>=1.24.3",
   "loguru>=0.7.0",
   "matplotlib>=3.7.1",
@@ -44,9 +38,16 @@ dev = [
   "tk>=8.6.12",
   "tqdm>=4.65.0",
   "torchmetrics>=1.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pip-tools>=6.12.2",
   "fiftyone>=0.22.0",
   "fiftyone-db-ubuntu2204>=0.4.0",
   "datasets>=2.16.1",
+  "pytest-cov>=4.0.0",
+  "pytest>=7.2.0",
 ]
 
 [project.urls]
