@@ -40,7 +40,6 @@ dev = [
   "pandas>=2.0.3",
   "pillow>=9.5.0",
   "pycocotools>=2.0.6",
-  "sahi>=0.11.14",
   "supervision>=0.13.0",
   "tk>=8.6.12",
   "tqdm>=4.65.0",
