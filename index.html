@@ -113,6 +113,16 @@
                   </span>
                   <span>Data</span>
                   </a>
+              </span>
+              <!-- HF Spaces Link. -->
+              <span class="link-block">
+                <a href="https://huggingface.co/spaces/rizavelioglu/fashion-segmentation"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <img alt="Spaces" src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" width="25"
+                       style="margin-left: -10px; margin-right: 5px">
+                  <span>Demo</span>
+                  </a>
+              </span>
             </div>
           </div>
         </div>
@@ -130,71 +140,54 @@
                 type="video/mp4">
       </video>
       <h2 class="subtitle has-text-centered">
-        <span class="dnerf">Nerfies</span> turns selfie videos from your phone into free-viewpoint portraits.
+        <span class="dnerf">FashionFail</span> dataset consists of samples
       </h2>
     </div>
   </div>
 </section>
 
 
-<section class="hero is-light is-small">
+<!-- Image carousel -->
+<section class="hero is-small">
   <div class="hero-body">
     <div class="container">
       <div id="results-carousel" class="carousel results-carousel">
-        <div class="item item-steve">
-          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/steve.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-chair-tp">
-          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/chair-tp.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-shiba">
-          <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/shiba.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-fullbody">
-          <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/fullbody.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-blueshirt">
-          <video poster="" id="blueshirt" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/blueshirt.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-mask">
-          <video poster="" id="mask" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/mask.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-coffee">
-          <video poster="" id="coffee" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/coffee.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-toby">
-          <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/toby2.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
+       <div class="item">
+        <!-- Your image here -->
+        <img src="static/images/" alt="MY ALT TEXT"/>
+        <h2 class="subtitle has-text-centered">
+          First image description.
+        </h2>
       </div>
+      <div class="item">
+        <!-- Your image here -->
+        <img src="static/images/.jpg" alt="MY ALT TEXT"/>
+        <h2 class="subtitle has-text-centered">
+          Second image description.
+        </h2>
+      </div>
+      <div class="item">
+        <!-- Your image here -->
+        <img src="static/images/.jpg" alt="MY ALT TEXT"/>
+        <h2 class="subtitle has-text-centered">
+         Third image description.
+       </h2>
+     </div>
+     <div class="item">
+      <!-- Your image here -->
+      <img src="static/images/.jpg" alt="MY ALT TEXT"/>
+      <h2 class="subtitle has-text-centered">
+        Fourth image description.
+      </h2>
     </div>
   </div>
+</div>
+</div>
 </section>
+<!-- End image carousel -->
 
 
+<!-- Abstract & Video -->
 <section class="section">
   <div class="container is-max-desktop">
     <!-- Abstract. -->
@@ -203,31 +196,18 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            sdfhkdsjfsdWe present the first method capable of photorealistically reconstructing a non-rigidly
-            deforming scene using photos/videos captured casually from mobile phones.
+            In the realm of fashion object detection and segmentation for online shopping images, existing
+            state-of-the-art fashion parsing models encounter limitations, particularly when exposed to non-model-worn
+            apparel and close-up shots. To address these failures, we introduce <i>FashionFail;</i> a new fashion
+            dataset with e-commerce images for object detection and segmentation. The dataset is efficiently curated
+            using our novel annotation tool that leverages recent foundation models.
           </p>
           <p>
-            Our approach augments neural radiance fields
-            (NeRF) by optimizing an
-            additional continuous volumetric deformation field that warps each observed point into a
-            canonical 5D NeRF.
-            We observe that these NeRF-like deformation fields are prone to local minima, and
-            propose a coarse-to-fine optimization method for coordinate-based models that allows for
-            more robust optimization.
-            By adapting principles from geometry processing and physical simulation to NeRF-like
-            models, we propose an elastic regularization of the deformation field that further
-            improves robustness.
-          </p>
-          <p>
-            We show that <span class="dnerf">Nerfies</span> can turn casually captured selfie
-            photos/videos into deformable NeRF
-            models that allow for photorealistic renderings of the subject from arbitrary
-            viewpoints, which we dub <i>"nerfies"</i>. We evaluate our method by collecting data
-            using a
-            rig with two mobile phones that take time-synchronized photos, yielding train/validation
-            images of the same pose at different viewpoints. We show that our method faithfully
-            reconstructs non-rigidly deforming scenes and reproduces unseen views with high
-            fidelity.
+            The primary objective of FashionFail is to serve as a test bed for evaluating the robustness of models.
+            Our analysis reveals the shortcomings of leading models, such as Attribute-Mask R-CNN and Fashionformer.
+            Additionally, we propose a baseline approach using naive data augmentation to mitigate common failure cases
+            and improve model robustness. Through this work, we aim to inspire and support further research in fashion
+            item detection and segmentation for industrial applications.
           </p>
         </div>
       </div>
@@ -247,6 +227,7 @@
     <!--/ Paper video. -->
   </div>
 </section>
+<!-- End Abstract & Video -->
 
 
 <section class="section">
@@ -287,65 +268,8 @@
 
         </div>
       </div>
+      <!--/ Matting. -->
     </div>
-    <!--/ Matting. -->
-
-    <!-- Animation. -->
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Animation</h2>
-
-        <!-- Interpolating. -->
-        <h3 class="title is-4">Interpolating states</h3>
-        <div class="content has-text-justified">
-          <p>
-            We can also animate the scene by interpolating the deformation latent codes of two input
-            frames. Use the slider here to linearly interpolate between the left frame and the right
-            frame.
-          </p>
-        </div>
-        <div class="columns is-vcentered interpolation-panel">
-          <div class="column is-3 has-text-centered">
-            <img src="./static/images/interpolate_start.jpg"
-                 class="interpolation-image"
-                 alt="Interpolate start reference image."/>
-            <p>Start Frame</p>
-          </div>
-          <div class="column is-3 has-text-centered">
-            <img src="./static/images/interpolate_end.jpg"
-                 class="interpolation-image"
-                 alt="Interpolation end reference image."/>
-            <p class="is-bold">End Frame</p>
-          </div>
-        </div>
-        <br/>
-        <!--/ Interpolating. -->
-
-        <!-- Re-rendering. -->
-        <h3 class="title is-4">Re-rendering the input video</h3>
-        <div class="content has-text-justified">
-          <p>
-            Using <span class="dnerf">Nerfies</span>, you can re-render a video from a novel
-            viewpoint such as a stabilized camera by playing back the training deformations.
-          </p>
-        </div>
-        <div class="content has-text-centered">
-          <video id="replay-video"
-                 controls
-                 muted
-                 preload
-                 playsinline
-                 width="75%">
-            <source src="./static/videos/replay.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <!--/ Re-rendering. -->
-
-      </div>
-    </div>
-    <!--/ Animation. -->
-
 
     <!-- Concurrent Work. -->
     <div class="columns is-centered">
@@ -394,6 +318,9 @@
 <footer class="footer">
   <div class="container">
     <div class="content has-text-centered">
+      <a class="icon-link" href="https://rizavelioglu.github.io/">
+        <i class="fas fa-home"></i>
+      </a>
       <a class="icon-link" href="https://github.com/rizavelioglu">
         <i class="fab fa-github"></i>
       </a>
