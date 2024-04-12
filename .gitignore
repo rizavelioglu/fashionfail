@@ -11,7 +11,7 @@ notebooks/
 .ipynb_checkpoints
 
 # Sphinx documentation
-docs/_build/
+references/_build/
 
 # mypy
 .mypy_cache/

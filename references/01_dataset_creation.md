@@ -1,5 +1,25 @@
 # Dataset Creation
 
+### Scraping
+
+We developed a web crawler specifically tailored for adidas.de using [Scrapy][website_scrapy].
+However, due to concerns about data privacy regulations, we've opted not to share it publicly.
+
+### (Manual) Filtering
+We built a simple annotation tool, based on `tkinter`(the standard Python interface to the Tk GUI toolkit), for labeling
+images obeying to three criteria
+
+The tool iterates over all scraped images and visualizes them. The human annotator simply labels each image either using
+the GUI or the keyboard shortcuts.
+
+
+### (Automatic) Annotating
+
+### (Manual) Quality Review
+
+
+---
+
 Here's the full pipeline of creating FashionFail Dataset:
 1. Scrape the following websites; `adidas`, `newbalance`, `puma`, `birkenstock`.
     - scraped contents are saved in `data/fashionfail/` in respective folders, e.g. `./adidas/raw/0.json` (1 json file per item)
@@ -107,3 +127,14 @@ python fashionfail/data/convert_ff_to_coco.py \
     --label_anns_file="/home/rizavelioglu/work/data/fashionfail/data-v2/df_labels.csv" \
     --out_path="/home/rizavelioglu/work/data/fashionfail/data-v2/fashionfail-v2_coco.json"
 ```
+
+---
+<div style="display: flex; justify-content: space-between;">
+
+   [Back](00_table_of_content.md)
+
+   [Next: Data Analysis](02_data_analysis)
+
+</div>
+
+[website_scrapy]: https://scrapy.org/

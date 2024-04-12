@@ -244,9 +244,11 @@ def convert_preds_to_coco(
             {
                 "image_id": int(image_id),
                 # Subtract 1 to match official annotation in `amrcnn`
-                "category_id": int(row["class"]) - 1
-                if model_name == "amrcnn"
-                else int(row["class"]),
+                "category_id": (
+                    int(row["class"]) - 1
+                    if model_name == "amrcnn"
+                    else int(row["class"])
+                ),
                 # Round coordinates to the nearest tenth of a pixel
                 "bbox": [round(float(coord), 1) for coord in row["bbox"]],
                 "score": float(row["score"]),

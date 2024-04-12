@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
-import requests
+import requests  # type: ignore
 from huggingface_hub import hf_hub_download
 from loguru import logger
 from tqdm import tqdm
@@ -36,7 +36,7 @@ def download_image_wrapper(params):
     pbar.update(1)
 
 
-def download_images(out_dir, max_workers: int = None) -> None:
+def download_images(out_dir) -> None:
     for split in ["train", "val", "test"]:
         img_dir = f"{out_dir}/images/{split}"
 
@@ -50,9 +50,7 @@ def download_images(out_dir, max_workers: int = None) -> None:
         # Initialize tqdm progress bar with the total number of URLs
         with tqdm(total=len(img_urls)) as pbar, requests.Session() as session:
             # Use ThreadPoolExecutor for concurrent image downloads
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=max_workers
-            ) as executor:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
                 # List to store futures for monitoring completion
                 futures = []
 
@@ -96,13 +94,6 @@ if __name__ == "__main__":
         default="~/.cache/fashionfail/",
         help="The directory where dataset will be saved.",
     )
-    parser.add_argument(
-        "--max_workers",
-        type=int,
-        required=False,
-        default=None,
-        help="Number of workers in Multithread.",
-    )
     # Parse cli arguments.
     args = parser.parse_args()
 
@@ -118,7 +109,7 @@ if __name__ == "__main__":
     # download_datasets(out_dir=save_dir)
 
     # Download images for each split
-    download_images(out_dir=save_dir, max_workers=args.max_workers)
+    download_images(out_dir=save_dir)
 
     # Display a completion message
     logger.info(

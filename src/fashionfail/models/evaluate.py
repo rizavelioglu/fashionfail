@@ -278,12 +278,16 @@ def eval_with_torchmetrics(args) -> None:
 
         target = [
             dict(
-                boxes=torch.unsqueeze(torch.tensor(gt_box), dim=0)
-                if gt_box.ndim == 1
-                else torch.tensor(gt_box),
-                labels=torch.unsqueeze(torch.tensor(gt_class), dim=0)
-                if gt_class.size == 1
-                else torch.tensor(gt_class),
+                boxes=(
+                    torch.unsqueeze(torch.tensor(gt_box), dim=0)
+                    if gt_box.ndim == 1
+                    else torch.tensor(gt_box)
+                ),
+                labels=(
+                    torch.unsqueeze(torch.tensor(gt_class), dim=0)
+                    if gt_class.size == 1
+                    else torch.tensor(gt_class)
+                ),
             )
         ]
 

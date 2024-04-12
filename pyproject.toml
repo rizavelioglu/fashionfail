@@ -27,31 +27,36 @@ classifiers = [
 ]
 
 dependencies = [
-  "pre-commit>=3.3.2",
-  "numpy>=1.24.3",
-  "loguru>=0.7.0",
-  "matplotlib>=3.7.1",
-  "pandas>=2.0.3",
-  "pillow>=9.5.0",
-  "pycocotools>=2.0.6",
-  "supervision>=0.13.0",
-  "tk>=8.6.12",
-  "tqdm>=4.65.0",
-  "torchmetrics>=1.1.0",
+  "pandas>=2.2.1",
+  "requests>=2.31.0",
+  "huggingface-hub>=0.21.4",
+  "loguru>=0.7.2",
 ]
 
 [project.optional-dependencies]
 dev = [
+  "pytorch>=2.1.1",
+  "torchaudio>=2.1.1",
+  "torchvision>=0.16.1",
+  "torchmetrics>=1.2.1",
+  "datasets>=2.16.1",
+  "scikit-learn>=1.4.1",
+  "pre-commit>=3.3.2",
   "pip-tools>=6.12.2",
+  "onnx==1.14.1",
+  "onnxruntime-gpu==1.15.0",
+  "pytorch-lightning>=1.8.6",
+  "aim>=3.17",
+  "pycocotools>=2.0.6",
+  "pytest>=7.2.0",
+  "tk>=8.6.12",
   "fiftyone>=0.22.0",
   "fiftyone-db-ubuntu2204>=0.4.0",
-  "datasets>=2.16.1",
-  "pytest-cov>=4.0.0",
-  "pytest>=7.2.0",
+  "supervision>=0.13.0",
 ]
 
 [project.urls]
-Homepage = ""
+Homepage = "https://fashionfail.github.io/"
 Repository = "https://github.com/rizavelioglu/fashionfail.git"
 Issues = "https://github.com/rizavelioglu/fashionfail/issues"
 "Bug Tracker" = "https://github.com/rizavelioglu/fashionfail/issues"

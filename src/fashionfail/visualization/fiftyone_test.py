@@ -8,6 +8,7 @@ Notes:
     - https://docs.voxel51.com/integrations/coco.html#coco-style-evaluation
     - https://docs.voxel51.com/tutorials/evaluate_detections.html#Evaluate-detections
 """
+
 import argparse
 
 import fiftyone as fo

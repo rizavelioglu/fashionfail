@@ -1,4 +1,16 @@
-**_Table:_** The class distribution in Fashionpedia-train and FashionFail-train.
+# Data Analysis
+
+> **TODO:** Add image resolution analysis for both datasets.
+
+> **Note:** FashionFail is not intended to replace the Fashionpedia dataset directly. Rather,
+> they target different domains—Fashionpedia focuses on 'in-the-wild' images showcasing multiple
+> apparel items on a human body, whereas FashionFail concentrates on singular items commonly found
+> in the e-commerce domain. However, FashionFail can still be utilized to assess the robustness of
+> trained models across the e-commerce domain, making it valuable for evaluating model performance
+> in real-world e-commerce settings.
+
+
+**_Table:_** The class distribution in `Fashionpedia-train` and `FashionFail-train`.
 
 | class                 | Fashionpedia# | Fashionpedia% | FashionFail# | FashionFail# |
 |-----------------------|:-------------:|:-------------:|:------------:|--------------|
@@ -64,3 +76,13 @@ has many annotations per image — *FP-val* has a total of *4481* annotations fo
 | 5  | vest               | 23       | 3      | 18      | 719       | 22     |
 | 26 | umbrella           | 3        | 0      | 1       | 135       | 5      |
 |    | **TOTAL**          | 1344     | 150    | 1001    | 152994    | 4481   |
+
+
+---
+<div style="display: flex; justify-content: space-between;">
+
+   [Back](01_dataset_creation.md)
+
+   [Next: Training](03_training.md)
+
+</div>

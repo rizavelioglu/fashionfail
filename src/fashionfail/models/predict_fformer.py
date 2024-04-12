@@ -27,7 +27,7 @@ def get_cli_args_parser():
         "--config_path",
         type=str,
         required=True,
-        help="The image directory for prediction.",
+        help="The path to model configs.",
     )
     parser.add_argument(
         "--dataset_name",
