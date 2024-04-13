@@ -18,13 +18,10 @@ pip install fashionfail[dev]  # full development
 
 
 ## Usage
-
-> We provide an explanation of each step in great detail, [please check them out here.](references/00_table_of_content.md)
+> We offer a comprehensive explanation of each step, including dataset creation, training, and evaluation. You can find
+detailed documentation [here.](references/00_table_of_content.md)
 
 ### FashionFail Dataset
-Check out [this file](references/01_dataset_creation) to get detailed information on how the dataset was generated, _i.e._
-scraping, filtering, annotating and quality review.
-
 The dataset _(annotations and image URLs)_ is available at [![Generic badge][logo-hf_datasets]][ff-hf_datasets].
 Execute the following to download the dataset (which downloads the annotation files and images for each `train`, `val`,
 and `test` splits):

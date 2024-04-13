@@ -133,7 +133,7 @@ python fashionfail/data/convert_ff_to_coco.py \
 
    [Back](00_table_of_content.md)
 
-   [Next: Data Analysis](02_data_analysis)
+   [Next: Data Analysis](02_data_analysis.md)
 
 </div>
 
