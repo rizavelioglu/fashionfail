@@ -56,7 +56,7 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://rizavelioglu.github.io/fashionfail/"
-Repository = "https://github.com/rizavelioglu/fashionfail.git"
-Issues = "https://github.com/rizavelioglu/fashionfail/issues"
+"homepage" = "https://rizavelioglu.github.io/fashionfail/"
+"repository" = "https://github.com/rizavelioglu/fashionfail.git"
+"issues" = "https://github.com/rizavelioglu/fashionfail/issues"
 "Bug Tracker" = "https://github.com/rizavelioglu/fashionfail/issues"
