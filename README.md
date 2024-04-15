@@ -12,8 +12,8 @@ The official repository of _"FashionFail: Addressing Failure Cases in Fashion Ob
 ## Install
 [todo]
 ```bash
-pip install fashionfail       # basic usage
-pip install fashionfail[dev]  # full development
+pip install fashionfail       # basic usage, e.g. downloading dataset
+pip install fashionfail[dev]  # full development, e.g. training, inference, evaluation
 ```
 
 
@@ -63,6 +63,32 @@ python fashiofail/models/predict_hf_space.py \
 The following project/directory structure is adopted:
 [Cookiecutter Data Science by DrivenData][cookiecutter].
 
+```
+.
+├── LICENSE
+├── notebooks/          # Jupyter Notebooks
+├── pyproject.toml      # The requirements file for reproducing the environment
+├── README.md
+├── references/         # Explanatory materials
+├── src/
+│   └── data/           # Scripts to download or generate data
+│   └── features/       # Scripts to turn raw data into features
+│   └── models/         # Scripts to train models, use trained models to make predictions
+│   └── visualization/  # Scripts to create exploratory and results oriented visualizations
+```
+
+### License
+
+### Citation
+If you find this repository useful in your research, please consider giving a star ⭐ and a citation:
+```
+@inproceedings{velioglu2024fashionfail,
+  author    = {Velioglu, Riza and Chan, Robin and Hammer, Barbara},
+  title     = {FashionFail: Addressing Failure Cases in Fashion Object Detection and Segmentation},
+  journal   = {IJCNN},
+  year      = {2024},
+}
+```
 
 [logo-hf_datasets]: https://img.shields.io/badge/🤗-Datasets-blue.svg?style=plastic
 [logo-hf_models]: https://img.shields.io/badge/🤗-Models-blue.svg?style=plastic
@@ -71,5 +97,5 @@ The following project/directory structure is adopted:
 [ff-hf_datasets]: https://huggingface.co/datasets/rizavelioglu/fashionfail
 [ff-hf_models]: https://huggingface.co/rizavelioglu/fashionfail
 [ff-hf_spaces]: https://huggingface.co/spaces/rizavelioglu/fashionfail
-[ff-paper]: https://arxiv.org/abs/1234.56789
+[ff-paper]: https://arxiv.org/abs/2404.08582
 [cookiecutter]: https://drivendata.github.io/cookiecutter-data-science/
