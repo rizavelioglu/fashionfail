@@ -106,7 +106,7 @@ if __name__ == "__main__":
     create_dirs(out_dir=save_dir)
 
     # Download .json file for each split (image URLs and annotations)
-    # download_datasets(out_dir=save_dir)
+    download_datasets(out_dir=save_dir)
 
     # Download images for each split
     download_images(out_dir=save_dir)

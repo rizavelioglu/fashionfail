@@ -86,6 +86,7 @@ If you find this repository useful in your research, please consider giving a st
   author    = {Velioglu, Riza and Chan, Robin and Hammer, Barbara},
   title     = {FashionFail: Addressing Failure Cases in Fashion Object Detection and Segmentation},
   journal   = {IJCNN},
+  eprint    = {2404.08582},
   year      = {2024},
 }
 ```
