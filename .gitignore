@@ -4,6 +4,6 @@ _site
 .jekyll-metadata
 vendor
 
+.idea/
 notebooks/
 src/
-.idea/
