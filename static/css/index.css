@@ -1,3 +1,11 @@
+.blue-text {
+  color: blue;
+}
+
+.purple-text {
+  color: purple;
+}
+
 body {
   font-family: 'Noto Sans', sans-serif;
 }
