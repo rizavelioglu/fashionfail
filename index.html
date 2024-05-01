@@ -145,21 +145,21 @@
   <div class="hero-body">
     <div class="container">
       <div id="results-carousel" class="carousel results-carousel">
-       <div class="item">
+        <div class="item">
         <!-- Your image here -->
-        <img src="static/images/pred-adi_10184_4.jpg" alt="MY ALT TEXT"/>
+        <img src="static/images/pred-adi_10184_4.jpg" alt="Bounding box predictions of two AI models on a shoe product image."/>
       </div>
-      <div class="item">
+        <div class="item">
         <!-- Your image here -->
-        <img src="static/images/pred-adi_8934_3.jpg" alt="MY ALT TEXT"/>
+        <img src="static/images/pred-adi_8934_3.jpg" alt="Bounding box predictions of two AI models on a bag product image."/>
       </div>
-      <div class="item">
+        <div class="item">
         <!-- Your image here -->
-        <img src="static/images/pred-adi_2435_1.jpg" alt="MY ALT TEXT"/>
+        <img src="static/images/pred-adi_2435_1.jpg" alt="Bounding box predictions of two AI models on a socks product image."/>
      </div>
-     <div class="item">
+        <div class="item">
       <!-- Your image here -->
-      <img src="static/images/pred-adi_5663_3.jpg" alt="MY ALT TEXT"/>
+      <img src="static/images/pred-adi_5663_3.jpg" alt="Bounding box predictions of two AI models on a watch product image."/>
     </div>
   </div>
       <!-- Add a single caption covering all the images -->
@@ -216,61 +216,79 @@
 <!-- End Abstract & Video -->
 
 
-
+<!-- Scale & Context -->
 <section class="section">
   <div class="container is-max-desktop">
     <div class="columns is-centered">
 
-      <!-- Visual Effects. -->
+      <!-- Scale -->
       <div class="column">
         <div class="content">
-          <h2 class="title is-3">Visual Effects</h2>
+          <h2 class="title is-4 has-text-centered">Scale</h2>
           <p>
-            Using <i>nerfies</i> you can create fun visual effects. This Dolly zoom effect
-            would be impossible without nerfies since it would require going through a wall.
+            While Attribute-Mask R-CNN claimed that it <i>"works reasonably well if the apparel item is worn
+            by a model"</i>, pointing out the lack of context as the sole reason for these failures, our findings
+            indicate that the issue is not solely due to the absence of context but also the scale of the items.
           </p>
-          <video id="dollyzoom" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/dollyzoom-stacked.mp4"
-                    type="video/mp4">
-          </video>
+          <img src="static/images/.jpg" alt="MY ALT TEXT"/>
         </div>
       </div>
-      <!--/ Visual Effects. -->
+      <!--/ Scale -->
 
-      <!-- Matting. -->
+      <!-- Context. -->
       <div class="column">
-        <h2 class="title is-3">Matting</h2>
+        <h2 class="title is-4 has-text-centered">Context</h2>
         <div class="columns is-centered">
           <div class="column content">
             <p>
-              As a byproduct of our method, we can also solve the matting problem by ignoring
-              samples that fall outside of a bounding box during rendering.
+              We demonstrate that scale alone may not be sufficient for detection in all cases and that both
+              context and scale are required in some cases.
             </p>
-            <video id="matting-video" controls playsinline height="100%">
-              <source src="./static/videos/matting.mp4"
-                      type="video/mp4">
-            </video>
+            <img src="static/images/.jpg" alt="MY ALT TEXT"/>
           </div>
 
         </div>
       </div>
-      <!--/ Matting. -->
+      <!--/ Context. -->
     </div>
 
-    <!-- Concurrent Work. -->
+  </div>
+</section>
+<!-- Scale & Context -->
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Method -->
     <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Related Links</h2>
+      <div class="column is-full-width has-text-centered">
+        <h2 class="title is-3">Method</h2>
 
         <div class="content has-text-justified">
           <p>
-            ...
+            By fine-tuning a pre-trained Mask R-CNN model (from PyTorch) on the <i>Fashionpedia-train</i> set using
+            intelligent data augmentation techniques, we are able to address many of the failure cases.
+            <br>[augmentation examples]
           </p>
         </div>
       </div>
     </div>
-    <!--/ Concurrent Work. -->
+    <!--/ Method -->
 
+    <!-- Qualitative Results -->
+    <div class="columns is-centered">
+      <div class="column is-full-width has-text-centered">
+        <h2 class="title is-3">Qualitative Results</h2>
+
+        <div class="content has-text-justified">
+          <p>
+            [Inference images Fig.9] <br>
+            As a byproduct of our method, we can also solve the multiple instance detection. [images from Notion]
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Qualitative Results -->
   </div>
 </section>
 
