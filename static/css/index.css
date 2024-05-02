@@ -110,11 +110,33 @@ body {
 .publication-body img {
 }
 
-.results-carousel {
+
+/* custom */
+.teaser-carousel {
+  display: flex;
+  justify-content: center; /* Center items horizontally */
+  align-items: center; /* Center items vertically */
   overflow: hidden;
 }
 
-.results-carousel .item {
+.teaser-carousel .item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  text-align: center; /* Center images horizontally */
+  width: 100%;
+}
+
+.teaser-carousel img {
+  max-width: 40%;
+  height: auto;
+  display: inline-block; /* Ensure the image is treated as an inline block element */
+}
+
+.scale-carousel {
+  overflow: hidden;
+}
+
+.scale-carousel .item {
   margin: 5px;
   overflow: hidden;
   border: 1px solid #bbb;
@@ -123,11 +145,6 @@ body {
   font-size: 0;
 }
 
-.results-carousel video {
-  margin: 0;
-}
-
-
 .blue-text {
   color: blue;
 }
@@ -135,7 +152,6 @@ body {
 .purple-text {
   color: purple;
 }
-
 
 .slider-pagination .slider-page {
   background: #000000;

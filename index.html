@@ -144,31 +144,19 @@
 <section class="hero is-small">
   <div class="hero-body">
     <div class="container">
-      <div id="results-carousel" class="carousel results-carousel">
-        <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/pred-adi_10184_4.jpg" alt="Bounding box predictions of two AI models on a shoe product image."/>
+      <div id="teaser-carousel" class="carousel teaser-carousel">
+        <div class="item"><img src="static/images/pred-adi_10184_4.jpg" alt="Bounding box predictions on a shoe product image."/></div>
+        <div class="item"><img src="static/images/pred-adi_8934_3.jpg" alt="Bounding box predictions on a bag product image."/></div>
+        <div class="item"><img src="static/images/pred-adi_2435_1.jpg" alt="Bounding box predictions on a socks product image."/></div>
+        <div class="item"><img src="static/images/pred-adi_5663_3.jpg" alt="Bounding box predictions on a watch product image."/></div>
       </div>
-        <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/pred-adi_8934_3.jpg" alt="Bounding box predictions of two AI models on a bag product image."/>
-      </div>
-        <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/pred-adi_2435_1.jpg" alt="Bounding box predictions of two AI models on a socks product image."/>
-     </div>
-        <div class="item">
-      <!-- Your image here -->
-      <img src="static/images/pred-adi_5663_3.jpg" alt="Bounding box predictions of two AI models on a watch product image."/>
-    </div>
-  </div>
       <!-- Add a single caption covering all the images -->
-      <h4 class="subtitle has-text-centered">
+      <h4 class="has-text-centered">
         Prediction failures of <span class="blue-text">Attribute-Mask R-CNN<sub>SpineNet-143</sub></span> and
         <span class="purple-text">Fashionformer<sub>Swin-base</sub></span> on samples from the <i>FashionFail-test</i> set.
       </h4>
-</div>
-</div>
+    </div>
+  </div>
 </section>
 <!-- End image carousel -->
 
@@ -217,64 +205,44 @@
 
 
 <!-- Scale & Context -->
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-
-      <!-- Scale -->
-      <div class="column">
-        <div class="content">
-          <h2 class="title is-4 has-text-centered">Scale</h2>
-          <p>
-            While Attribute-Mask R-CNN claimed that it <i>"works reasonably well if the apparel item is worn
-            by a model"</i>, pointing out the lack of context as the sole reason for these failures, our findings
-            indicate that the issue is not solely due to the absence of context but also the scale of the items.
-          </p>
-          <img src="static/images/.jpg" alt="MY ALT TEXT"/>
-        </div>
+<section class="hero is-small">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <h2 class="title is-4 has-text-centered">Scale</h2>
+      <p>
+        While Attribute-Mask R-CNN claimed that it <a href="https://arxiv.org/pdf/2004.12276#page=19"><i>"works
+      reasonably well if the apparel item is worn by a model"</i></a>, pointing out the lack of context as the sole
+      reason for these failures, our findings indicate that the issue is not solely due to the absence of context
+      but also the scale of the items.
+        In the original sizes of the images, <span class="blue-text">Attribute-Mask R-CNN<sub>SpineNet-143</sub></span>
+        fails to detect displayed objects. However, simply rescaling images and/or zooming out (padding with white
+        pixels) leads to correct detections:
+      </p>
+      <div class="carousel scale-carousel">
+        <div class="item"><img src="static/images/scale-zarashoe.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/scale-glasses.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/scale-adishoe.jpg" alt=""/></div>
       </div>
-      <!--/ Scale -->
-
-      <!-- Context. -->
-      <div class="column">
-        <h2 class="title is-4 has-text-centered">Context</h2>
-        <div class="columns is-centered">
-          <div class="column content">
-            <p>
-              We demonstrate that scale alone may not be sufficient for detection in all cases and that both
-              context and scale are required in some cases.
-            </p>
-            <img src="static/images/.jpg" alt="MY ALT TEXT"/>
-          </div>
-
-        </div>
-      </div>
-      <!--/ Context. -->
+      <br>
+      <h2 class="title is-4 has-text-centered">Context</h2>
+      <p>
+        We demonstrate that scale alone may not be sufficient for detection in all cases and that both context and scale
+        are required in some cases. For example, in the original size of <a href="https://www.adidas.de/en/code-five-watch/IR2520.html">an image</a>,
+        a 'watch' is detected as a 'shoe' with <b>94%</b> confidence. Resizing the image already fixes the issue: the
+        previously detected shoe becomes a watch with <b>100%</b> confidence. However, removing the pixels not belonging to
+        the watch leads to non-detection. Downsizing the image further does not resolve the issue:
+      </p>
+      <br>
+      <img src="static/images/context-watch.jpg" alt="MY ALT TEXT"/>
     </div>
-
   </div>
 </section>
 <!-- Scale & Context -->
 
 
+<!-- Results -->
 <section class="section">
   <div class="container is-max-desktop">
-    <!-- Method -->
-    <div class="columns is-centered">
-      <div class="column is-full-width has-text-centered">
-        <h2 class="title is-3">Method</h2>
-
-        <div class="content has-text-justified">
-          <p>
-            By fine-tuning a pre-trained Mask R-CNN model (from PyTorch) on the <i>Fashionpedia-train</i> set using
-            intelligent data augmentation techniques, we are able to address many of the failure cases.
-            <br>[augmentation examples]
-          </p>
-        </div>
-      </div>
-    </div>
-    <!--/ Method -->
-
     <!-- Qualitative Results -->
     <div class="columns is-centered">
       <div class="column is-full-width has-text-centered">
@@ -282,8 +250,15 @@
 
         <div class="content has-text-justified">
           <p>
-            [Inference images Fig.9] <br>
-            As a byproduct of our method, we can also solve the multiple instance detection. [images from Notion]
+            By fine-tuning a pre-trained Mask R-CNN model on the <i>Fashionpedia-train</i> set using
+            intelligent data augmentation techniques, we are able to address many of the failure cases. Furthermore,
+            we improve the model performance (both bbox and mask mAP) on the <i>Fashionfail-test</i> dataset while
+            matching the model performance of other baselines on <i>Fashiopedia-val</i>.
+
+            <!--[Inference images Fig.9] -->
+            <!--[images from Notion]-->
+            <br><br>
+            As a byproduct of our method, we can also solve the multiple instance detection.
           </p>
         </div>
       </div>
@@ -291,6 +266,7 @@
     <!--/ Qualitative Results -->
   </div>
 </section>
+<!-- Results -->
 
 
 <!-- BibTeX Citation -->
@@ -307,6 +283,7 @@
   </div>
 </section>
 <!-- BibTeX Citation -->
+
 
 <footer class="footer">
   <div class="container">
