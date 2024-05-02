@@ -1,11 +1,3 @@
-.blue-text {
-  color: blue;
-}
-
-.purple-text {
-  color: purple;
-}
-
 body {
   font-family: 'Noto Sans', sans-serif;
 }
@@ -136,30 +128,15 @@ body {
 }
 
 
-.interpolation-panel {
-  background: #f5f5f5;
-  border-radius: 10px;
+.blue-text {
+  color: blue;
 }
 
-.interpolation-panel .interpolation-image {
-  width: 100%;
-  border-radius: 5px;
+.purple-text {
+  color: purple;
 }
 
-.interpolation-video-column {
-}
 
-.interpolation-panel .slider {
-  margin: 0 !important;
-}
-
-.interpolation-panel .slider {
-  margin: 0 !important;
-}
-
-#interpolation-image-wrapper {
-  width: 100%;
-}
-#interpolation-image-wrapper img {
-  border-radius: 5px;
+.slider-pagination .slider-page {
+  background: #000000;
 }
