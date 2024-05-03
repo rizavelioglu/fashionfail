@@ -127,8 +127,8 @@ body {
 }
 
 .teaser-carousel img {
-  max-width: 40%;
-  height: auto;
+  max-height: 40%;
+  width: auto;
   display: inline-block; /* Ensure the image is treated as an inline block element */
 }
 

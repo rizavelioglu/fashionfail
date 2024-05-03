@@ -243,27 +243,29 @@
 <!-- Results -->
 <section class="section">
   <div class="container is-max-desktop">
-    <!-- Qualitative Results -->
-    <div class="columns is-centered">
-      <div class="column is-full-width has-text-centered">
-        <h2 class="title is-3">Qualitative Results</h2>
-
-        <div class="content has-text-justified">
-          <p>
-            By fine-tuning a pre-trained Mask R-CNN model on the <i>Fashionpedia-train</i> set using
-            intelligent data augmentation techniques, we are able to address many of the failure cases. Furthermore,
-            we improve the model performance (both bbox and mask mAP) on the <i>Fashionfail-test</i> dataset while
-            matching the model performance of other baselines on <i>Fashiopedia-val</i>.
-
-            <!--[Inference images Fig.9] -->
-            <!--[images from Notion]-->
-            <br><br>
-            As a byproduct of our method, we can also solve the multiple instance detection.
-          </p>
-        </div>
+    <h2 class="title is-3 has-text-centered">Results</h2>
+      <p>
+        By fine-tuning a pre-trained Mask R-CNN model on the <i>Fashionpedia-train</i> set using
+        intelligent data augmentation techniques, we are able to address many of the failure cases. Furthermore,
+        we improve the model performance (both bbox and mask mAP) on the <i>Fashionfail-test</i> dataset while
+        matching the model performance of other baselines on <i>Fashiopedia-val</i>.
+      </p>
+    <br>
+      <div class="carousel teaser-carousel">
+        <div class="item"><img src="static/images/preds-glasses.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/preds-shoe_1.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/preds-shoe_2.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/preds-shoe_3.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/preds-bag_1.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/preds-bag_2.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/preds-jacket.jpg" alt=""/></div>
+        <div class="item"><img src="static/images/preds-shirt.jpg" alt=""/></div>
       </div>
-    </div>
-    <!--/ Qualitative Results -->
+    <p>
+      <br>
+      <!--TODO: [images from Notion]-->
+      As a byproduct of our method, we can also solve the multiple instance detection.
+    </p>
   </div>
 </section>
 <!-- Results -->
