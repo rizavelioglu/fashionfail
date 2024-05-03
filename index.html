@@ -263,9 +263,20 @@
       </div>
     <p>
       <br>
-      <!--TODO: [images from Notion]-->
-      As a byproduct of our method, we can also solve the multiple instance detection.
+      As a by-product of our method, we can also solve the multiple instance detection problem. Both baselines mostly
+      provide predictions for a single person, sometimes for the one in the foreground and sometimes for the one in the
+      background. Occasionally, they provide detections for both for some classes, while other times they merge boxes
+      unreasonably. This happens quite randomly. On the other hand, our custom data augmentation successfully provides
+      detections.
     </p>
+    <br>
+    <div class="carousel teaser-carousel">
+      <div class="item"><img src="static/images/preds-multi0.jpg" alt=""/></div>
+      <div class="item"><img src="static/images/preds-multi1.jpg" alt=""/></div>
+      <div class="item"><img src="static/images/preds-multi2.jpg" alt=""/></div>
+      <div class="item"><img src="static/images/preds-multi3.jpg" alt=""/></div>
+      <div class="item"><img src="static/images/preds-multi4.jpg" alt=""/></div>
+    </div>
   </div>
 </section>
 <!-- Results -->
