@@ -1,0 +1,47 @@
+.aim
+
+# PyCharm
+.idea/
+
+# Apple devices
+.DS_Store
+
+# Jupyter Notebook
+notebooks/
+.ipynb_checkpoints
+
+# Sphinx documentation
+references/_build/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.pytest_cache/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST

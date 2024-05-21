@@ -1,0 +1,67 @@
+title = "fashionfail"
+
+[owner]
+name = "Riza Velioglu"
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0"]
+
+[project]
+name = "fashionfail"
+version = "0.1.0"
+description = "Official repository of FashionFail paper."
+requires-python = ">=3.8"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+keywords = ["dataset", "e-commerce", "clothing parsing", "object detection", "instance segmentation", "fashion"]
+authors = [
+  {name = "Riza Velioglu", email = "rvelioglu@techfak.uni-bielefeld.de"}
+]
+maintainers = [
+  {name = "Riza Velioglu", email = "rvelioglu@techfak.uni-bielefeld.de"}
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Development Status :: 3 - Alpha",
+]
+
+dependencies = [
+  "pandas>=2.2.1",
+  "requests>=2.31.0",
+  "huggingface-hub>=0.21.4",
+  "loguru>=0.7.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "torch>=2.2.1",
+  "torchaudio>=2.1.1",
+  "torchvision>=0.17.1",
+  "torchmetrics>=1.2.1",
+  "datasets>=2.16.1",
+  "scikit-learn>=1.4.1",
+  "pre-commit>=3.3.2",
+  "pip-tools>=6.12.2",
+  "onnx==1.14.1",
+  "onnxruntime-gpu==1.15.0",
+  "pytorch-lightning>=1.8.6",
+  "aim>=3.19.2",
+  "pycocotools>=2.0.7",
+  "tqdm>=4.66.2",
+  "pytest>=7.2.0",
+  "pillow>=10.2.0",
+  "matplotlib>=3.8.3",
+#  "fiftyone>=0.22.0",
+#  "fiftyone-db-ubuntu2204>=0.4.0",
+  "supervision==0.6.0",
+
+  "groundingdino @ git+https://github.com/IDEA-Research/GroundingDINO.git",
+  "segment_anything @ git+https://github.com/facebookresearch/segment-anything.git",
+]
+
+[project.urls]
+"homepage" = "https://rizavelioglu.github.io/fashionfail/"
+"repository" = "https://github.com/rizavelioglu/fashionfail.git"
+"issues" = "https://github.com/rizavelioglu/fashionfail/issues"
+"Bug Tracker" = "https://github.com/rizavelioglu/fashionfail/issues"
