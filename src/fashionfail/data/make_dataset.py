@@ -44,7 +44,7 @@ def download_images(out_dir) -> None:
         with open(out_dir / f"ff_{split}.json") as fp:
             data = json.load(fp)
         df_imgs = pd.DataFrame(data["images"])
-        img_urls = df_imgs["url"].tolist()
+        img_urls = df_imgs["original_url"].tolist()
         img_names = df_imgs["file_name"].tolist()
 
         # Initialize tqdm progress bar with the total number of URLs
