@@ -69,7 +69,7 @@ inference using the user interface.
 ---
 ### Project Structure
 The following project/directory structure is adopted:
-[Cookiecutter Data Science by DrivenData][cookiecutter].
+[Cookiecutter Data Science-v1 by DrivenData][cookiecutter].
 
 ```
 .
@@ -110,4 +110,4 @@ If you find this repository useful in your research, please consider giving a st
 [ff-hf_models]: https://huggingface.co/rizavelioglu/fashionfail
 [ff-hf_spaces]: https://huggingface.co/spaces/rizavelioglu/fashionfail
 [ff-paper]: https://arxiv.org/abs/2404.08582
-[cookiecutter]: https://drivendata.github.io/cookiecutter-data-science/
+[cookiecutter]: https://cookiecutter-data-science.drivendata.org/v1/
