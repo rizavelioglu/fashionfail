@@ -1,0 +1,40 @@
+title: FashionFail code repository
+repository-code: 'https://github.com/rizavelioglu/fashionfail'
+url: 'https://rizavelioglu.github.io/fashionfail/'
+license: SSPL-1.0
+authors:
+  - given-names: Riza
+    family-names: Velioglu
+    orcid: https://orcid.org/0000-0002-2160-4976
+identifiers:
+  - type: doi
+    value: 10.1109/IJCNN60899.2024.10651287
+    description: Conference proceedings
+  - type: doi
+    value: 10.48550/arXiv.2404.08582
+    description: Pre-print
+  - type: url
+    value: 'https://rizavelioglu.github.io/fashionfail/'
+    description: Project webpage
+preferred-citation:
+  type: conference-paper
+  title: "FashionFail: Addressing Failure Cases in Fashion Object Detection and Segmentation"
+  doi: 10.1109/IJCNN60899.2024.10651287
+  journal: IJCNN
+  authors:
+  - family-names: "Velioglu"
+    given-names: "Riza"
+  - family-names: "Chan"
+    given-names: "Robin"
+  - family-names: "Hammer"
+    given-names: "Barbara"
+  year: 2024
+  conference:
+    name: "International Joint Conference on Neural Networks, 2024"
+keywords:
+- fashion parsing
+- object detection
+- instance segmentation
+- dataset
+- foundation models
+cff-version: 1.2.0
