@@ -64,7 +64,9 @@ Clone the repository, navigate to the `detection` directory and download the mod
 ```bash
 cd /change/dir/to/fashionfail/repo/
 git clone https://github.com/jangop/tpu.git
-cd tpu/models/official/detection
+cd tpu
+git checkout 85b65b6
+cd models/official/detection
 curl https://storage.googleapis.com/cloud-tpu-checkpoints/detection/projects/fashionpedia/fashionpedia-spinenet-143.tar.gz --output fashionpedia-spinenet-143.tar.gz
 tar -xf fashionpedia-spinenet-143.tar.gz
 curl https://storage.googleapis.com/cloud-tpu-checkpoints/detection/projects/fashionpedia/fashionpedia-r50-fpn.tar.gz
